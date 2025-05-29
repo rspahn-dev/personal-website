@@ -1,112 +1,67 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Robin Spahn</title>
-  <link rel="stylesheet" href="style.css" />
-  <script defer src="script.js"></script>
+  <meta name="description" content="Robin Spahn – AI Developer Portfolio and Blog" />
+  <title>Robin Spahn | AI Portfolio</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <canvas id="background-canvas"></canvas>
-
   <header>
-    <div class="container">
-	<img src="website_banner.png" alt="Banner" class="site-banner" />
-      <h1>Robin Spahn</h1>
-      <nav>
-        <ul>
-          <li><a href="#about">About</a></li>
-          <li><a href="#projects">Projects</a></li>
-          <li><a href="#experience">Experience</a></li>
-          <li><a href="#portfolio">Portfolio</a></li>
-          <li><a href="#blog">Blog</a></li>
-          <li><a href="#contact">Contact Me</a></li>
-          <li><button id="theme-toggle">🌓</button></li>
-        </ul>
-      </nav>
-    </div>
+    <h1>Robin Spahn</h1>
+    <nav>
+      <ul>
+        <li><a href="#home">Home</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#gallery">Gallery</a></li>
+        <li><a href="#blog">Blog</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
   </header>
 
-  <section class="hero">
-    <div class="container">
-      <h2>AI Builder, Organizer, Creative</h2>
-      <p>Exploring the intersection of tech, community, and art.</p>
-      <a href="#projects" class="btn">View My Work</a>
-    </div>
+  <section id="home" class="hero">
+    <h2>Welcome to My AI Playground</h2>
+    <p>Portfolio, Blog, and Experiments in AI and LLMs</p>
   </section>
 
   <section id="about">
-    <div class="container">
-      <h2>About Me</h2>
-      <p>Hello! I’m Robin — passionate about AI, gaming, and community building. I organize events, create digital tools, and strive to make tech more inclusive.</p>
-      <a href="resume.pdf" class="btn" download>Download Resume</a>
-    </div>
+    <h2>About Me</h2>
+    <p>I'm Robin, an AI Developer specializing in LLMs, image generation, and nerdy creative coding.</p>
   </section>
 
-  <section id="projects">
-    <div class="container">
-      <h2>Projects</h2>
-      <div class="project-grid">
-        <div class="project">
-          <h3>Price Scout</h3>
-          <p>A tool to compare product prices across major retailers.</p>
-        </div>
-        <div class="project">
-          <h3>Trivia Night Bot</h3>
-          <p>Automated event trivia generator used by DC Gaymers.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="experience">
-    <div class="container">
-      <h2>Experience</h2>
-      <p>Former VP of Events at DC Gaymers, creator of community engagement tools, and AI development specialist with experience in prompt engineering, web automation, and image generation workflows.</p>
-    </div>
-  </section>
-
-  <section id="portfolio">
-    <div class="container">
-      <h2>Portfolio</h2>
-      <div class="portfolio-grid">
-        <div class="portfolio-item">
-          <img src="work1.png" alt="Project 1" />
-          <p>Event Planner Dashboard</p>
-        </div>
-        <div class="portfolio-item">
-          <img src="work2.png" alt="Project 2" />
-          <p>AI Image Generator Showcase</p>
-        </div>
-      </div>
+  <section id="gallery">
+    <h2>AI Art Gallery</h2>
+    <div class="gallery-grid">
+      <img src="placeholder1.jpg" alt="AI Art 1" />
+      <img src="placeholder2.jpg" alt="AI Art 2" />
     </div>
   </section>
 
   <section id="blog">
-    <div class="container">
-      <h2>Blog</h2>
-      <p>Coming soon: thoughts on AI, tech tools, and creative projects.</p>
-    </div>
+    <h2>Latest Blog Posts</h2>
+    <ul class="blog-list">
+      <li><a href="#">Understanding Fine-Tuning in LLMs</a></li>
+      <li><a href="#">Best Practices for AI Art Prompting</a></li>
+    </ul>
   </section>
 
   <section id="contact">
-    <div class="container">
-      <h2>Contact Me</h2>
-      <form id="contact-form">
-        <input type="text" placeholder="Your Name" required />
-        <input type="email" placeholder="Your Email" required />
-        <textarea placeholder="Your Message" required></textarea>
-        <button type="submit">Send (currently does not send)</button>
-      </form>
-      <div id="ai-response"></div>
-    </div>
+    <h2>Contact Me</h2>
+    <form id="contactForm">
+      <input type="text" name="name" placeholder="Your name" required />
+      <input type="email" name="email" placeholder="Your email" required />
+      <textarea name="message" placeholder="Your message" required></textarea>
+      <button type="submit">Send</button>
+    </form>
+    <p id="formResponse"></p>
   </section>
 
   <footer>
-    <div class="container">
-      <p>© 2025 Robin Spahn | <a href="https://github.com/rspahn-dev" target="_blank" rel="noopener noreferrer">GitHub</a> | <a href="https://www.linkedin.com/public-profile/settings?trk=d_flagship3_profile_self_view_public_profile" target="_blank" rel="noopener noreferrer">LinkedIn</a></p>
-    </div>
+    <p>&copy; 2025 Robin Spahn. All rights reserved.</p>
   </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
