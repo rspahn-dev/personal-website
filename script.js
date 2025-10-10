@@ -55,8 +55,3 @@ function animate() {
   requestAnimationFrame(animate);
 }
 animate();
-
-window.addEventListener("mousemove", (e) => {
-  particles.push(new Particle(e.clientX, e.clientY));
-  hue = (hue + 5) % 360;
-});
