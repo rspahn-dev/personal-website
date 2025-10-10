@@ -18,27 +18,45 @@ window.addEventListener("resize", resizeCanvas);
 
 // Trail Variables
 let hue = 0;
+let particles = [];
 
-// Rainbow Circle Draw
-function drawRainbowCircle(x, y) {
-  const radius = 40;
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, Math.PI * 2);
-  ctx.strokeStyle = `hsl(${hue}, 100%, 60%)`;
-  ctx.lineWidth = 4;
-  ctx.stroke();
-  ctx.closePath();
-  hue = (hue + 5) % 360;
+// Particle Class for Trail Dots
+class Particle {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.alpha = 1;
+    this.radius = 40;
+    this.hue = hue;
+  }
+
+  update() {
+    this.alpha -= 0.01;
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `hsla(${this.hue}, 100%, 60%, ${this.alpha})`;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.closePath();
+  }
 }
 
-// Gentle Fade Without Darkening
-function fadeCanvas() {
-  ctx.fillStyle = "rgba(255, 255, 255, 0.02)"; // light fade
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+// Animate Trail
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles = particles.filter(p => p.alpha > 0);
+  particles.forEach(p => {
+    p.update();
+    p.draw();
+  });
+  requestAnimationFrame(animate);
 }
+animate();
 
-// Animate on mouse move
 window.addEventListener("mousemove", (e) => {
-  fadeCanvas();
-  drawRainbowCircle(e.clientX, e.clientY);
+  particles.push(new Particle(e.clientX, e.clientY));
+  hue = (hue + 5) % 360;
 });
