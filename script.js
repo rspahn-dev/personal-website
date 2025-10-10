@@ -22,14 +22,13 @@ class Particle {
     this.x = x;
     this.y = y;
     this.hue = hue;
-    this.alpha = 1;
     this.radius = 40;
   }
 
   draw() {
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.strokeStyle = `hsla(${this.hue}, 100%, 60%, ${this.alpha})`;
+    ctx.strokeStyle = `hsl(${this.hue}, 100%, 60%)`;
     ctx.lineWidth = 4;
     ctx.stroke();
     ctx.closePath();
@@ -37,14 +36,14 @@ class Particle {
 }
 
 function animate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  particles.forEach(p => p.draw());
+  // 🛑 Do NOT clear the canvas
   requestAnimationFrame(animate);
+  particles.forEach(p => p.draw());
 }
 animate();
 
 window.addEventListener("mousemove", (e) => {
-  if (particles.length >= 5) particles.shift(); // keep only last 5
+  if (particles.length >= 5) particles.shift(); // keep only 5
   particles.push(new Particle(e.clientX, e.clientY));
-  hue = (hue + 30) % 360; // jump hue more for distinct colors
+  hue = (hue + 30) % 360;
 });
