@@ -49,8 +49,8 @@ canvas#background-canvas {
 header {
   background-color: var(--primary);
   color: white;
-  padding: 1em 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  margin: 0;
+  padding: 0;
 }
 
 header h1 {
@@ -116,6 +116,14 @@ section h2 {
   background-clip: text;
   color: transparent;
   margin-bottom: 0.5em;
+}
+
+.site-banner {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0;
+  padding: 0;
 }
 
 .project-grid,
