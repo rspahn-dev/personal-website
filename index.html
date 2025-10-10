@@ -1,112 +1,147 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="light">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Robin Spahn</title>
-  <link rel="stylesheet" href="style.css" />
-  <script defer src="script.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Robin Spahn — Queer Dev using AI to Build Inclusive Web Experiences</title>
+  <meta name="description" content="I’m Robin Spahn (they/them), a queer developer blending creativity and AI to design, prototype, and ship inclusive web experiences." />
+  <meta name="theme-color" content="#7c3aed" />
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:title" content="Robin Spahn — Queer Dev using AI" />
+  <meta property="og:description" content="Queer. Creative. Code + AI. I build inclusive web experiences fast." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://dummyimage.com/1200x630/1f1b24/ffffff.png&text=Robin+Spahn+%E2%80%94+Queer+AI+Dev" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Favicon (emoji fallback) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Ctext y='54' font-size='54'%3E%F0%9F%A6%84%3C/text%3E%3C/svg%3E">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <canvas id="background-canvas"></canvas>
+  <!-- Skip link -->
+  <a class="skip-link" href="#main">Skip to content</a>
 
-  <header>
-    <div class="container">
-	<img src="website_banner.png" alt="Banner" class="site-banner" />
-      <h1>Robin Spahn</h1>
-      <nav>
-        <ul>
-          <li><a href="#about">About</a></li>
-          <li><a href="#projects">Projects</a></li>
-          <li><a href="#experience">Experience</a></li>
-          <li><a href="#portfolio">Portfolio</a></li>
-          <li><a href="#blog">Blog</a></li>
-          <li><a href="#contact">Contact Me</a></li>
-          <li><button id="theme-toggle">🌓</button></li>
-        </ul>
+  <!-- Header -->
+  <header aria-label="Site Header">
+    <div class="wrap nav">
+      <div class="brand" aria-label="Brand">
+        <div class="logo" aria-hidden="true" title="Pride gradient"></div>
+        <span>Robin Spahn <small>(they/them) • queer • ai • web</small></span>
+      </div>
+      <nav aria-label="Primary">
+        <a class="btn" href="#work">Work</a>
+        <a class="btn" href="#writing">Writing</a>
+        <a class="btn" href="#blog">Blog</a>
+        <a class="btn" href="#contact">Contact</a>
+        <a class="btn btn--primary" href="#contact" aria-label="Open contact form">Let’s build with AI</a>
       </nav>
     </div>
   </header>
 
-  <section class="hero">
-    <div class="container">
-      <h2>AI Builder, Organizer, Creative</h2>
-      <p>Exploring the intersection of tech, community, and art.</p>
-      <a href="#projects" class="btn">View My Work</a>
-    </div>
-  </section>
+  <!-- Banner -->
+  <figure class="banner">
+    <img
+      src="website_banner.png"
+      alt="Colorful abstract banner representing queer creativity and AI coding energy"
+      width="2400" height="900"
+      loading="eager" />
+    <figcaption class="visually-hidden">
+      A vibrant banner celebrating Robin’s queer identity and AI-driven development.
+    </figcaption>
+  </figure>
 
-  <section id="about">
-    <div class="container">
-      <h2>About Me</h2>
-      <p>Hello! I’m Robin — passionate about AI, gaming, and community building. I organize events, create digital tools, and strive to make tech more inclusive.</p>
-      <a href="resume.pdf" class="btn" download>Download Resume</a>
-    </div>
-  </section>
-
-  <section id="projects">
-    <div class="container">
-      <h2>Projects</h2>
-      <div class="project-grid">
-        <div class="project">
-          <h3>Price Scout</h3>
-          <p>A tool to compare product prices across major retailers.</p>
+  <!-- Main -->
+  <main id="main" class="wrap" tabindex="-1">
+    <!-- Hero -->
+    <section class="hero" aria-label="Intro">
+      <div>
+        <span class="tag" role="img" aria-label="rainbow sparkles">🏳️‍🌈✨ Queer dev + AI</span>
+        <h1 class="glitch" data-text="I prototype with AI & ship with heart.">I prototype with AI & ship with heart.</h1>
+        <p>
+          I’m <strong>Robin Spahn</strong> (they/them) — a queer developer blending human creativity with machine intelligence.
+          From idea to launch, I use AI as a collaborator to design, code, and iterate at lightspeed while keeping
+          <strong>100% accessibility</strong> front and center.
+        </p>
+        <div class="cta">
+          <a class="btn btn--primary" href="#work" aria-label="Jump to selected work">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 3l2 4 4 2-4 2-2 4-2-4-4-2 4-2 2-4zM18 6l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2zM16 14l2 4 4 2-4 2-2 4-2-4-4-2 4-2 2-4z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+            See the work
+          </a>
+          <a class="btn btn--ghost" href="#about">About me</a>
+          <a class="btn btn--ghost" href="#contact">Say hi</a>
         </div>
-        <div class="project">
-          <h3>Trivia Night Bot</h3>
-          <p>Automated event trivia generator used by DC Gaymers.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="experience">
-    <div class="container">
-      <h2>Experience</h2>
-      <p>Former VP of Events at DC Gaymers, creator of community engagement tools, and AI development specialist with experience in prompt engineering, web automation, and image generation workflows.</p>
-    </div>
-  </section>
-
-  <section id="portfolio">
-    <div class="container">
-      <h2>Portfolio</h2>
-      <div class="portfolio-grid">
-        <div class="portfolio-item">
-          <img src="work1.png" alt="Project 1" />
-          <p>Event Planner Dashboard</p>
-        </div>
-        <div class="portfolio-item">
-          <img src="work2.png" alt="Project 2" />
-          <p>AI Image Generator Showcase</p>
+        <div class="badges" aria-label="Tech badges">
+          <span class="badge">HTML/CSS/JS</span>
+          <span class="badge">Accessibility-first</span>
+          <span class="badge">AI: GPT / Claude / Llama</span>
+          <span class="badge">Design systems</span>
+          <span class="badge">Rapid prototyping</span>
         </div>
       </div>
-    </div>
-  </section>
 
-  <section id="blog">
-    <div class="container">
-      <h2>Blog</h2>
-      <p>Coming soon: thoughts on AI, tech tools, and creative projects.</p>
-    </div>
-  </section>
+      <figure class="avatar" aria-label="Portrait">
+        <!-- Replace with your photo: <img src="me.jpg" alt="Portrait of Robin Spahn" /> -->
+        <svg viewBox="0 0 200 200" role="img" aria-label="Placeholder portrait">
+          <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs>
+          <circle cx="100" cy="80" r="42" fill="url(#g)"/>
+          <rect x="45" y="125" width="110" height="60" rx="30" fill="url(#g)"/>
+        </svg>
+        <div class="ribbon" aria-hidden="true"></div>
+        <figcaption class="visually-hidden">Stylized avatar; replace with a real headshot for better SEO.</figcaption>
+      </figure>
+    </section>
 
-  <section id="contact">
-    <div class="container">
-      <h2>Contact Me</h2>
-      <form id="contact-form">
-        <input type="text" placeholder="Your Name" required />
-        <input type="email" placeholder="Your Email" required />
-        <textarea placeholder="Your Message" required></textarea>
-        <button type="submit">Send (currently does not send)</button>
-      </form>
-      <div id="ai-response"></div>
-    </div>
-  </section>
+    <!-- About -->
+    <section id="about" aria-label="About">
+      <h2>About</h2>
+      <p class="muted">I build inclusive front-ends and thoughtful tooling. My practice: start with people, prototype with AI, and ship fast—with <strong>WCAG-conformant</strong> defaults.</p>
+      <div class="grid grid-3">
+        <article class="card">
+          <div class="eyebrow">Identity</div>
+          <h3>Queer, loud, and proud</h3>
+          <p>The web is for everyone—so I build it that way.</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">Approach</div>
+          <h3>AI as co-pilot</h3>
+          <p>Models help explore options and test ideas, while I steer the vision and polish the details.</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">Accessibility</div>
+          <h3>100% accessible</h3>
+          <p>Semantic HTML, visible focus, color contrast, keyboard-first UX, SR testing, and reduced-motion support.</p>
+        </article>
+      </div>
+    </section>
 
-  <footer>
-    <div class="container">
-      <p>© 2025 Robin Spahn | <a href="https://github.com/rspahn-dev" target="_blank" rel="noopener noreferrer">GitHub</a> | <a href="https://www.linkedin.com/public-profile/settings?trk=d_flagship3_profile_self_view_public_profile" target="_blank" rel="noopener noreferrer">LinkedIn</a></p>
-    </div>
-  </footer>
-</body>
-</html>
+    <!-- Work -->
+    <section id="work" aria-label="Selected Work">
+      <h2>Selected Work</h2>
+      <p class="muted">A few showcases of AI-augmented builds. Replace with real projects & links when ready.</p>
+      <div class="grid grid-3" role="list">
+        <article class="card" role="listitem">
+          <div class="kicker">Design System</div>
+          <h3>Prismatic UI</h3>
+          <p>Token-driven component library with AI-generated theming and contrast guardrails.</p>
+          <a href="#" aria-label="Open Prismatic UI case study">Case study →</a>
+        </article>
+        <article class="card" role="listitem">
+          <div class="kicker">Prototype</div>
+          <h3>Ideas to App in 48h</h3>
+          <p>Idea → wireframe → code pipeline using AI codegen + visual diff tests. MVPs that feel shippable.</p>
+          <a href="#" aria-label="Open Ideas to App project">Read more →</a>
+        </article>
+        <article class="card" role="listitem">
+          <div class="kicker">Tooling</div>
+          <h3>Prompt-safe Docs</h3>
+          <p>Docs with semantic search, prompt-aware snippets, and “explain like I’m new” toggles.</p>
+          <a href="#" aria-label="Open Prompt-safe Docs project">See details →</a>
+        </article>
+      </div>
+
+      <div class="spacer-14"></div>
+      <details class="card">
+        <summary><strong>Peek under the hood: AI assisted component</strong></summary>
