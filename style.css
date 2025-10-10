@@ -46,6 +46,15 @@ canvas#background-canvas {
   z-index: 1;
 }
 
+.site-banner {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border-bottom: 4px solid var(--accent); /* optional stylistic touch */
+}
+
 header {
   background-color: var(--primary);
   color: white;
