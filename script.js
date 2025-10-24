@@ -64,6 +64,19 @@ const CONTACT_ICONS = {
   linkedin: "💼"
 };
 
+const hasWindow = typeof window !== "undefined";
+const supportsRandomUUID =
+  hasWindow && window.crypto && typeof window.crypto.randomUUID === "function";
+
+function generateId(prefix) {
+  if (supportsRandomUUID) {
+    return `${prefix}-${window.crypto.randomUUID()}`;
+  }
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).slice(2, 8);
+  return `${prefix}-${timestamp}-${random}`;
+}
+
 function supportsLocalStorage() {
   try {
     const key = "__storage_test__";
@@ -86,43 +99,166 @@ function clone(value) {
   return hasStructuredClone ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 }
 
+function normalizeSections(sections) {
+  const base = clone(DEFAULT_CONTENT.sections);
+  if (!sections || typeof sections !== "object") {
+    return base;
+  }
+
+  if (typeof sections.about === "string") {
+    base.about = sections.about;
+  }
+
+  if (typeof sections.portfolioIntro === "string") {
+    base.portfolioIntro = sections.portfolioIntro;
+  }
+
+  if (sections.contact && typeof sections.contact === "object") {
+    const contact = { ...base.contact };
+    ["email", "instagram", "facebook", "linkedin"].forEach((key) => {
+      if (typeof sections.contact[key] === "string") {
+        contact[key] = sections.contact[key];
+      }
+    });
+    base.contact = contact;
+  }
+
+  return base;
+}
+
+function normalizeProjects(projects) {
+  if (!Array.isArray(projects)) {
+    return clone(DEFAULT_CONTENT.projects);
+  }
+
+  return projects
+    .map((project, index) => {
+      if (!project || typeof project !== "object") {
+        return null;
+      }
+
+      const title = typeof project.title === "string" ? project.title.trim() : "";
+      const description =
+        typeof project.description === "string" ? project.description.trim() : "";
+
+      if (!title || !description) {
+        return null;
+      }
+
+      const normalized = {
+        id:
+          typeof project.id === "string" && project.id.trim()
+            ? project.id
+            : generateId(`project-${index + 1}`),
+        title,
+        description
+      };
+
+      if (project.media && typeof project.media === "object") {
+        const src = typeof project.media.src === "string" ? project.media.src.trim() : "";
+        if (src) {
+          normalized.media = {
+            src,
+            alt:
+              typeof project.media.alt === "string" && project.media.alt.trim()
+                ? project.media.alt
+                : title
+          };
+        }
+      }
+
+      return normalized;
+    })
+    .filter(Boolean);
+}
+
+function normalizePosts(posts) {
+  if (!Array.isArray(posts)) {
+    return clone(DEFAULT_CONTENT.posts);
+  }
+
+  return posts
+    .map((post, index) => {
+      if (!post || typeof post !== "object") {
+        return null;
+      }
+
+      const title = typeof post.title === "string" ? post.title.trim() : "";
+      const body = typeof post.body === "string" ? post.body.trim() : "";
+      if (!title || !body) {
+        return null;
+      }
+
+      const normalized = {
+        id:
+          typeof post.id === "string" && post.id.trim()
+            ? post.id
+            : generateId(`post-${index + 1}`),
+        title,
+        body,
+        tags: Array.isArray(post.tags)
+          ? post.tags
+              .map((tag) => (typeof tag === "string" ? tag.trim() : ""))
+              .filter(Boolean)
+          : [],
+        published: typeof post.published === "string" ? post.published : ""
+      };
+
+      if (post.image && typeof post.image === "object") {
+        const src = typeof post.image.src === "string" ? post.image.src.trim() : "";
+        if (src) {
+          normalized.image = {
+            src,
+            alt:
+              typeof post.image.alt === "string" && post.image.alt.trim()
+                ? post.image.alt
+                : title
+          };
+        }
+      }
+
+      return normalized;
+    })
+    .filter(Boolean);
+}
+
+function normalizeContent(rawContent) {
+  const source = rawContent && typeof rawContent === "object" ? rawContent : {};
+  return {
+    sections: normalizeSections(source.sections),
+    projects: normalizeProjects(source.projects),
+    posts: normalizePosts(source.posts)
+  };
+}
+
 function loadContent() {
   if (!canUseStorage) {
-    return clone(memoryState);
+    return clone(normalizeContent(memoryState));
   }
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (!raw) {
-    saveContent(DEFAULT_CONTENT);
-    return clone(DEFAULT_CONTENT);
+    const normalized = normalizeContent(DEFAULT_CONTENT);
+    saveContent(normalized);
+    return clone(normalized);
   }
   try {
     const parsed = JSON.parse(raw);
-    const sections = {
-      ...DEFAULT_CONTENT.sections,
-      ...parsed.sections,
-      contact: {
-        ...DEFAULT_CONTENT.sections.contact,
-        ...(parsed.sections?.contact || {})
-      }
-    };
-    return {
-      sections,
-      projects: Array.isArray(parsed.projects) ? parsed.projects : clone(DEFAULT_CONTENT.projects),
-      posts: Array.isArray(parsed.posts) ? parsed.posts : clone(DEFAULT_CONTENT.posts)
-    };
+    return normalizeContent(parsed);
   } catch (error) {
     console.warn("Unable to parse stored content; restoring defaults.");
-    saveContent(DEFAULT_CONTENT);
-    return clone(DEFAULT_CONTENT);
+    const normalized = normalizeContent(DEFAULT_CONTENT);
+    saveContent(normalized);
+    return clone(normalized);
   }
 }
 
 function saveContent(content) {
+  const normalized = normalizeContent(content);
   if (!canUseStorage) {
-    memoryState = clone(content);
+    memoryState = clone(normalized);
     return;
   }
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
 }
 
 function updateYear() {
@@ -175,7 +311,12 @@ function renderAbout(section) {
   const container = document.getElementById("about-content");
   if (!container) return;
   container.innerHTML = "";
-  const paragraphs = section.about
+  const aboutText =
+    typeof section.about === "string" && section.about.trim()
+      ? section.about
+      : DEFAULT_CONTENT.sections.about;
+
+  const paragraphs = aboutText
     .split(/\n\n+/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
@@ -597,7 +738,7 @@ function initProjectForm(content) {
     event.preventDefault();
     const next = loadContent();
     const project = {
-      id: crypto.randomUUID ? crypto.randomUUID() : `project-${Date.now()}`,
+      id: generateId("project"),
       title: titleField.value.trim(),
       description: descriptionField.value.trim()
     };
@@ -639,7 +780,7 @@ function initPostForm(content) {
     event.preventDefault();
     const next = loadContent();
     const post = {
-      id: crypto.randomUUID ? crypto.randomUUID() : `post-${Date.now()}`,
+      id: generateId("post"),
       title: titleField.value.trim(),
       body: bodyField.value.trim(),
       tags: parseTags(tagsField.value),
