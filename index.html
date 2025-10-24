@@ -1,84 +1,154 @@
 <!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Robin Spahn - Queer AI developer blending community, tech, and creativity." />
+  <title>Robin Spahn</title>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <canvas id="background-canvas" aria-hidden="true"></canvas>
+
+  <header class="site-header">
+    <img src="website_banner.png" alt="Banner" class="site-banner" />
+  </header>
+
+  <main class="container">
+    <nav class="tab-nav" role="tablist" aria-label="Primary">
+      <button
+        id="tab-about"
+        class="tab-button active"
+        data-tab="about"
+        role="tab"
+        aria-selected="true"
+        aria-controls="about"
+      >
+        About
+      </button>
+      <button
+        id="tab-portfolio"
+        class="tab-button"
+        data-tab="portfolio"
+        role="tab"
+        aria-selected="false"
+        aria-controls="portfolio"
+      >
+        Portfolio
+      </button>
+      <button
+        id="tab-blog"
+        class="tab-button"
+        data-tab="blog"
+        role="tab"
+        aria-selected="false"
+        aria-controls="blog"
+      >
+        Blog
+      </button>
+      <button
+        id="tab-contact"
+        class="tab-button"
+        data-tab="contact"
+        role="tab"
+        aria-selected="false"
+        aria-controls="contact"
+      >
+        Contact Me
+      </button>
+    </nav>
+
+    <section id="about" class="tab-panel active" role="tabpanel" aria-labelledby="tab-about">
+      <h2>Hi, I'm Robin</h2>
+      <div id="about-content" class="rich-text"></div>
+    </section>
+
+    <section id="portfolio" class="tab-panel" role="tabpanel" aria-labelledby="tab-portfolio" hidden>
+      <h2>Portfolio</h2>
+      <p class="intro-text" id="portfolio-intro"></p>
+      <div class="portfolio-grid" id="portfolio-grid" role="list"></div>
+      <p id="portfolio-empty" class="empty-state" hidden>No projects saved yet. Use the admin page to add your work.</p>
+    </section>
+
+    <section id="blog" class="tab-panel" role="tabpanel" aria-labelledby="tab-blog" hidden>
+      <h2>Blog</h2>
+      <p class="intro-text">Essays, notes, and dispatches from ongoing experiments. Filter by date or tags to dig into specific themes.</p>
+      <form class="blog-filters" aria-label="Blog filters" id="blog-filter-form">
+        <div class="filter-group">
+          <label for="start-date">Start date</label>
+          <input type="date" id="start-date" name="start-date" />
+        </div>
+        <div class="filter-group">
+          <label for="end-date">End date</label>
+          <input type="date" id="end-date" name="end-date" />
+        </div>
+        <div class="filter-group">
+          <label for="tag-filter">Tags</label>
+          <select id="tag-filter" name="tag-filter">
+            <option value="">All tags</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button type="submit">Apply filters</button>
+          <button type="reset" class="secondary">Reset</button>
+        </div>
+      </form>
+      <div class="blog-grid" id="blog-grid"></div>
+      <p id="blog-empty" class="empty-state" hidden>No posts match your filters yet. Try another selection.</p>
+    </section>
+
+    <section id="contact" class="tab-panel" role="tabpanel" aria-labelledby="tab-contact" hidden>
+      <h2>Contact Me</h2>
+      <p class="intro-text">Let's collaborate! Reach out via any of the channels below.</p>
+      <div class="contact-icons" id="contact-list" role="list"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© <span id="year"></span> Robin Spahn. All rights reserved.</p>
+    <a class="admin-link" href="admin.html">Admin</a>
+  </footer>
+</body>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Robin Spahn</title>
-    <link rel="stylesheet" href="style.css" />
-    <script defer src="script.js"></script>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>React App</title>
   </head>
   <body>
-    <div class="site-top-bar" aria-hidden="true"></div>
-    <canvas id="background-canvas" aria-hidden="true"></canvas>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
 
-    <header class="site-header">
-      <img class="site-banner" src="website_banner.png" alt="Abstract rainbow banner" />
-    </header>
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
 
-    <main class="container">
-      <nav class="tab-nav" role="tablist" aria-label="Site sections">
-        <button id="tab-about" class="tab-button active" data-tab="about" role="tab" aria-selected="true" aria-controls="about">
-          About
-        </button>
-        <button id="tab-portfolio" class="tab-button" data-tab="portfolio" role="tab" aria-selected="false" aria-controls="portfolio">
-          Portfolio
-        </button>
-        <button id="tab-blog" class="tab-button" data-tab="blog" role="tab" aria-selected="false" aria-controls="blog">
-          Blog
-        </button>
-        <button id="tab-contact" class="tab-button" data-tab="contact" role="tab" aria-selected="false" aria-controls="contact">
-          Contact Me
-        </button>
-      </nav>
-
-      <section id="about" class="tab-panel active" role="tabpanel" aria-labelledby="tab-about">
-        <h2>Hi, I'm Robin</h2>
-        <div id="about-content" class="rich-text"></div>
-      </section>
-
-      <section id="portfolio" class="tab-panel" role="tabpanel" aria-labelledby="tab-portfolio" hidden>
-        <h2>Portfolio</h2>
-        <p id="portfolio-intro" class="intro-text"></p>
-        <div id="portfolio-grid" class="portfolio-grid" role="list"></div>
-      </section>
-
-      <section id="blog" class="tab-panel" role="tabpanel" aria-labelledby="tab-blog" hidden>
-        <h2>Blog</h2>
-        <p class="intro-text">Filter by date or tags to explore posts.</p>
-        <form id="blog-filter-form" class="blog-filters" aria-label="Blog filters">
-          <div>
-            <label for="start-date">Start date</label>
-            <input type="date" id="start-date" name="start-date" />
-          </div>
-          <div>
-            <label for="end-date">End date</label>
-            <input type="date" id="end-date" name="end-date" />
-          </div>
-          <div>
-            <label for="tag-filter">Tags</label>
-            <select id="tag-filter" name="tag-filter">
-              <option value="">All tags</option>
-            </select>
-          </div>
-          <div>
-            <button type="submit">Apply</button>
-            <button type="reset" class="secondary">Reset</button>
-          </div>
-        </form>
-        <div id="blog-grid" class="blog-grid"></div>
-        <p id="blog-empty" class="empty-state" hidden>No posts match your filters yet.</p>
-      </section>
-
-      <section id="contact" class="tab-panel" role="tabpanel" aria-labelledby="tab-contact" hidden>
-        <h2>Contact Me</h2>
-        <p class="intro-text">Connect with me around the web.</p>
-        <div id="contact-list" class="contact-icons" role="list"></div>
-      </section>
-    </main>
-
-    <footer>
-      <p>© <span id="year"></span> Robin Spahn. All rights reserved.</p>
-      <p><a class="admin-link" href="admin.html">Admin dashboard</a></p>
-    </footer>
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
   </body>
 </html>
