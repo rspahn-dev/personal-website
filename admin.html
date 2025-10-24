@@ -1,0 +1,714 @@
+const STORAGE_KEYS = {
+  sections: "site-sections",
+  portfolio: "site-portfolio",
+  posts: "site-posts",
+};
+const DEFAULT_CONTENT = {
+  sections: {
+    about: [
+      "I'm a queer AI developer and community organizer who loves building empowering tools, supporting grassroots movements, and crafting joyful digital experiences.",
+      "From leading collaborative hackathons to experimenting with generative art, I thrive where creativity and technology intersect. When I'm not coding, you can find me hosting local meetups, mentoring new technologists, or dreaming up my next multimedia project.",
+      "This space highlights the projects, writing, and collaborations that mean the most to me. Thanks for visiting—feel free to explore and reach out!",
+    ].join("\n\n"),
+    portfolioIntro:
+      "A snapshot of the work I'm most proud of, with space reserved to embed interactive demos as they launch.",
+    contact: {
+      email: "hello@example.com",
+      instagram: "https://instagram.com/yourhandle",
+      facebook: "https://facebook.com/yourprofile",
+      linkedin: "https://linkedin.com/in/yourprofile",
+    },
+  },
+  portfolio: [
+    {
+      id: "community-signal-boost",
+      title: "Community Signal Boost",
+      description:
+        "A platform that curates mutual aid requests and shares them with local networks in real time. The live dashboard will sit here soon!",
+      media: {
+        src: "work1.png",
+        alt: "Screenshot of a featured project",
+      },
+    },
+    {
+      id: "xr-storytelling-lab",
+      title: "XR Storytelling Lab",
+      description:
+        "Immersive storytelling experiments blending motion capture, AI-generated scenery, and collaborative workshops. This tile is standing by for video highlights.",
+    },
+    {
+      id: "activist-data-commons",
+      title: "Activist Data Commons",
+      description:
+        "Privacy-first data co-op tooling that helps organizers measure impact without compromising community safety. Interactive prototypes will live here.",
+    },
+  ],
+  posts: [
+    {
+      id: "designing-for-joyful-mutual-aid",
+      title: "Designing for Joyful Mutual Aid",
+      image: {
+        src: "website_banner.png",
+        alt: "Abstract rainbow banner",
+      },
+      body: "Exploring how community-driven design practices can make digital mutual aid spaces more welcoming and sustainable. This article will sync with the publishing workflow soon.",
+      tags: ["community", "activism"],
+      published: "2024-05-12",
+    },
+  ],
+};
+const CONTACT_ICONS = {
+  email: "📧",
+  instagram: "📸",
+  facebook: "📘",
+  linkedin: "💼",
+};
+const clone = (value) => {
+  if (typeof structuredClone === "function") {
+    return structuredClone(value);
+  }
+  return JSON.parse(JSON.stringify(value));
+};
+const KEY_TO_GROUP = Object.fromEntries(
+  Object.entries(STORAGE_KEYS).map(([group, key]) => [key, group])
+);
+const memoryState = {
+  sections: clone(DEFAULT_CONTENT.sections),
+  portfolio: clone(DEFAULT_CONTENT.portfolio),
+  posts: clone(DEFAULT_CONTENT.posts),
+};
+function isStorageAvailable() {
+  try {
+    const testKey = "__storage_test__";
+    window.localStorage.setItem(testKey, "1");
+    window.localStorage.removeItem(testKey);
+    return true;
+  } catch (error) {
+    console.warn("Local storage is unavailable; changes will not persist.");
+    return false;
+  }
+}
+const storageEnabled = isStorageAvailable();
+function readStorage(key, fallback) {
+  if (!storageEnabled) {
+    const group = KEY_TO_GROUP[key];
+    if (group && memoryState[group]) {
+      return clone(memoryState[group]);
+    }
+    return clone(fallback);
+  }
+  const raw = window.localStorage.getItem(key);
+  if (!raw) return clone(fallback);
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    console.warn(`Unable to parse data for ${key}; reverting to defaults.`, error);
+    return clone(fallback);
+  }
+}
+function writeStorage(key, value) {
+  if (!storageEnabled) {
+    const group = KEY_TO_GROUP[key];
+    if (group) {
+      memoryState[group] = clone(value);
+    }
+    return;
+  }
+  window.localStorage.setItem(key, JSON.stringify(value));
+}
+function ensureDefaults() {
+  if (!storageEnabled) return;
+  Object.entries(DEFAULT_CONTENT).forEach(([group, defaultValue]) => {
+    const key = STORAGE_KEYS[group];
+    if (!key) return;
+    if (!window.localStorage.getItem(key)) {
+      writeStorage(key, defaultValue);
+    }
+  });
+}
+function getSiteState() {
+  return {
+    sections: readStorage(STORAGE_KEYS.sections, DEFAULT_CONTENT.sections),
+    portfolio: readStorage(STORAGE_KEYS.portfolio, DEFAULT_CONTENT.portfolio),
+    posts: readStorage(STORAGE_KEYS.posts, DEFAULT_CONTENT.posts),
+  };
+}
+function setSiteSections(sections) {
+  writeStorage(STORAGE_KEYS.sections, sections);
+}
+function setPortfolio(projects) {
+  writeStorage(STORAGE_KEYS.portfolio, projects);
+}
+function setPosts(posts) {
+  writeStorage(STORAGE_KEYS.posts, posts);
+}
+function updateYear() {
+  const yearEl = document.getElementById("year");
+  if (yearEl) {
+    yearEl.textContent = new Date().getFullYear();
+  }
+}
+function initTabs() {
+  const tabButtons = document.querySelectorAll(".tab-button");
+  const tabPanels = document.querySelectorAll(".tab-panel");
+  if (!tabButtons.length) return;
+  tabButtons.forEach((button) => {
+    const isActive = button.classList.contains("active");
+    button.setAttribute("tabindex", isActive ? "0" : "-1");
+    button.setAttribute("aria-selected", String(isActive));
+  });
+  tabButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const targetId = button.dataset.tab;
+      tabButtons.forEach((btn) => {
+        const isActive = btn === button;
+        btn.classList.toggle("active", isActive);
+        btn.setAttribute("aria-selected", String(isActive));
+        btn.setAttribute("tabindex", isActive ? "0" : "-1");
+      });
+      tabPanels.forEach((panel) => {
+        const isMatch = panel.id === targetId;
+        panel.classList.toggle("active", isMatch);
+        panel.hidden = !isMatch;
+      });
+    });
+  });
+}
+function createParagraphs(text) {
+  return text
+    .split(/\n\n+/)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .map((chunk) => `<p>${chunk.replace(/\n/g, "<br />")}</p>`)
+    .join("");
+}
+function renderAbout(content) {
+  const aboutContainer = document.getElementById("about-content");
+  if (!aboutContainer) return;
+  aboutContainer.innerHTML = createParagraphs(content.about);
+}
+function renderPortfolioIntro(sections) {
+  const introEl = document.getElementById("portfolio-intro");
+  if (!introEl) return;
+  const introText = sections.portfolioIntro || "";
+  introEl.textContent = introText;
+  introEl.hidden = introText.trim().length === 0;
+}
+function renderPortfolio(projects) {
+  const grid = document.getElementById("portfolio-grid");
+  const emptyState = document.getElementById("portfolio-empty");
+  if (!grid || !emptyState) return;
+  grid.innerHTML = "";
+  if (!projects.length) {
+    emptyState.hidden = false;
+    return;
+  }
+  emptyState.hidden = true;
+  projects.forEach((project) => {
+    const article = document.createElement("article");
+    article.className = "portfolio-item";
+    article.setAttribute("role", "listitem");
+    if (project.media?.src) {
+      const img = document.createElement("img");
+      img.src = project.media.src;
+      img.alt = project.media.alt || `${project.title} preview`;
+      article.appendChild(img);
+    } else {
+      const placeholder = document.createElement("div");
+      placeholder.className = "placeholder-frame";
+      placeholder.setAttribute("aria-hidden", "true");
+      article.appendChild(placeholder);
+    }
+    const title = document.createElement("h3");
+    title.textContent = project.title;
+    article.appendChild(title);
+    const description = document.createElement("p");
+    description.textContent = project.description;
+    article.appendChild(description);
+    grid.appendChild(article);
+  });
+}
+function buildContactLink(type, url) {
+  const label = type.charAt(0).toUpperCase() + type.slice(1);
+  return {
+    icon: CONTACT_ICONS[type] || "🔗",
+    label,
+    url,
+  };
+}
+function renderContact(contact) {
+  const list = document.getElementById("contact-list");
+  if (!list) return;
+  list.innerHTML = "";
+  const entries = Object.entries(contact).filter(([, url]) => Boolean(url));
+  if (!entries.length) {
+    const message = document.createElement("p");
+    message.className = "empty-state";
+    message.textContent = "Add your links from the admin page to show contact options here.";
+    list.appendChild(message);
+    return;
+  }
+  entries.forEach(([type, url]) => {
+    const item = document.createElement("a");
+    const { icon, label } = buildContactLink(type, url);
+    item.setAttribute("role", "listitem");
+    item.href = type === "email" ? `mailto:${url}` : url;
+    if (type !== "email") {
+      item.target = "_blank";
+      item.rel = "noopener";
+    }
+    item.setAttribute("aria-label", label);
+    const iconSpan = document.createElement("span");
+    iconSpan.setAttribute("aria-hidden", "true");
+    iconSpan.textContent = icon;
+    item.appendChild(iconSpan);
+    const textSpan = document.createElement("span");
+    textSpan.textContent = label;
+    item.appendChild(textSpan);
+    list.appendChild(item);
+  });
+}
+function renderBlogPosts(posts) {
+  const grid = document.getElementById("blog-grid");
+  const emptyState = document.getElementById("blog-empty");
+  if (!grid || !emptyState) return;
+  grid.innerHTML = "";
+  if (!posts.length) {
+    emptyState.hidden = false;
+    return;
+  }
+  emptyState.hidden = true;
+  posts
+    .slice()
+    .sort((a, b) => new Date(b.published || 0) - new Date(a.published || 0))
+    .forEach((post) => {
+      const article = document.createElement("article");
+      article.className = "blog-post";
+      if (post.image?.src) {
+        const img = document.createElement("img");
+        img.src = post.image.src;
+        img.alt = post.image.alt || `${post.title} featured image`;
+        article.appendChild(img);
+      }
+      const content = document.createElement("div");
+      content.className = "blog-content";
+      const title = document.createElement("h3");
+      title.textContent = post.title;
+      content.appendChild(title);
+      const meta = document.createElement("p");
+      meta.className = "meta";
+      const date = post.published ? new Date(post.published) : null;
+      const formattedDate = date ? date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : null;
+      const tags = post.tags?.length ? post.tags.join(", ") : "untagged";
+      const statusText = formattedDate ? `Published ${formattedDate}` : "Draft";
+      meta.textContent = `${statusText} • Tags: ${tags}`;
+      content.appendChild(meta);
+      const body = document.createElement("p");
+      body.textContent = post.body;
+      content.appendChild(body);
+      article.appendChild(content);
+      grid.appendChild(article);
+    });
+}
+function populateTagFilter(posts) {
+  const tagFilter = document.getElementById("tag-filter");
+  if (!tagFilter) return;
+  const selected = tagFilter.value;
+  const options = new Set();
+  posts.forEach((post) => {
+    post.tags?.forEach((tag) => options.add(tag));
+  });
+  const sortedOptions = Array.from(options).sort((a, b) => a.localeCompare(b));
+  tagFilter.innerHTML = "";
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "All tags";
+  tagFilter.appendChild(defaultOption);
+  sortedOptions.forEach((tag) => {
+    const option = document.createElement("option");
+    option.value = tag;
+    option.textContent = tag;
+    if (tag === selected) {
+      option.selected = true;
+    }
+    tagFilter.appendChild(option);
+  });
+}
+function initBlogFilters() {
+  const form = document.getElementById("blog-filter-form");
+  if (!form) return;
+  const runFilters = () => {
+    const state = cachedSiteState || getSiteState();
+    const start = form.querySelector("#start-date").value;
+    const end = form.querySelector("#end-date").value;
+    const tag = form.querySelector("#tag-filter").value;
+    let filtered = state.posts.slice();
+    if (start) {
+      filtered = filtered.filter((post) => !post.published || post.published >= start);
+    }
+    if (end) {
+      filtered = filtered.filter((post) => !post.published || post.published <= end);
+    }
+    if (tag) {
+      filtered = filtered.filter((post) => post.tags?.includes(tag));
+    }
+    renderBlogPosts(filtered);
+  };
+  applyBlogFilters = runFilters;
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    runFilters();
+  });
+  form.addEventListener("reset", () => {
+    window.requestAnimationFrame(() => {
+      const state = cachedSiteState || getSiteState();
+      renderBlogPosts(state.posts);
+    });
+  });
+}
+let cachedSiteState = null;
+let applyBlogFilters = null;
+function refreshSiteView() {
+  cachedSiteState = getSiteState();
+  renderAbout(cachedSiteState.sections);
+  renderPortfolioIntro(cachedSiteState.sections);
+  renderPortfolio(cachedSiteState.portfolio);
+  renderContact(cachedSiteState.sections.contact);
+  populateTagFilter(cachedSiteState.posts);
+  if (typeof applyBlogFilters === "function") {
+    applyBlogFilters();
+  } else {
+    renderBlogPosts(cachedSiteState.posts);
+  }
+}
+function renderSiteView() {
+  refreshSiteView();
+  initBlogFilters();
+  if (typeof applyBlogFilters === "function") {
+    applyBlogFilters();
+  }
+}
+
+function setStatusMessage(element, message) {
+  if (!element) return;
+  element.textContent = message;
+  if (!message) return;
+  setTimeout(() => {
+    if (element.textContent === message) {
+      element.textContent = "";
+    }
+  }, 4000);
+}
+function initSectionsForm(sections) {
+  const form = document.getElementById("sections-form");
+  if (!form) return;
+  const aboutField = form.querySelector("#about-text");
+  const introField = form.querySelector("#portfolio-intro-text");
+  const emailField = form.querySelector("#contact-email");
+  const instagramField = form.querySelector("#contact-instagram");
+  const facebookField = form.querySelector("#contact-facebook");
+  const linkedinField = form.querySelector("#contact-linkedin");
+  const status = document.getElementById("sections-status");
+  aboutField.value = sections.about;
+  introField.value = sections.portfolioIntro || "";
+  emailField.value = sections.contact.email || "";
+  instagramField.value = sections.contact.instagram || "";
+  facebookField.value = sections.contact.facebook || "";
+  linkedinField.value = sections.contact.linkedin || "";
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const updated = {
+      about: aboutField.value.trim(),
+      portfolioIntro: introField.value.trim(),
+      contact: {
+        email: emailField.value.trim(),
+        instagram: instagramField.value.trim(),
+        facebook: facebookField.value.trim(),
+        linkedin: linkedinField.value.trim(),
+      },
+    };
+    setSiteSections(updated);
+    setStatusMessage(status, "Sections saved successfully.");
+  });
+}
+function renderAdminProjects(projects) {
+  const list = document.getElementById("project-list");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!projects.length) {
+    const row = document.createElement("div");
+    row.className = "admin-row";
+    row.setAttribute("role", "row");
+    const cell = document.createElement("span");
+    cell.setAttribute("role", "cell");
+    cell.textContent = "No projects yet.";
+    row.appendChild(cell);
+    const actionCell = document.createElement("span");
+    actionCell.setAttribute("role", "cell");
+    row.appendChild(actionCell);
+class Particle {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.hue = hue;
+    this.radius = 40;
+    list.appendChild(row);
+    return;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `hsl(${this.hue}, 100%, 60%)`;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.closePath();
+  projects.forEach((project) => {
+    const row = document.createElement("div");
+    row.className = "admin-row";
+    row.setAttribute("role", "row");
+    row.dataset.id = project.id;
+    const name = document.createElement("span");
+    name.setAttribute("role", "cell");
+    name.textContent = project.title;
+    row.appendChild(name);
+    const actions = document.createElement("span");
+    actions.setAttribute("role", "cell");
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "link-button";
+    removeButton.textContent = "Remove";
+    removeButton.addEventListener("click", () => {
+      const current = getSiteState().portfolio.filter((item) => item.id !== project.id);
+      setPortfolio(current);
+      renderAdminProjects(current);
+      setStatusMessage(document.getElementById("project-status"), "Project removed.");
+    });
+    actions.appendChild(removeButton);
+    row.appendChild(actions);
+    list.appendChild(row);
+  });
+}
+function initProjectForm(projects) {
+  const form = document.getElementById("project-form");
+  if (!form) return;
+  const titleField = form.querySelector("#project-title");
+  const descriptionField = form.querySelector("#project-description");
+  const mediaField = form.querySelector("#project-media");
+  const mediaAltField = form.querySelector("#project-media-alt");
+  const status = document.getElementById("project-status");
+  renderAdminProjects(projects);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const newProject = {
+      id: crypto.randomUUID ? crypto.randomUUID() : `project-${Date.now()}`,
+      title: titleField.value.trim(),
+      description: descriptionField.value.trim(),
+    };
+    const mediaUrl = mediaField.value.trim();
+    const mediaAlt = mediaAltField.value.trim();
+    if (mediaUrl) {
+      newProject.media = { src: mediaUrl, alt: mediaAlt };
+    }
+    const current = getSiteState().portfolio;
+    const updated = [...current, newProject];
+    setPortfolio(updated);
+    renderAdminProjects(updated);
+    form.reset();
+    setStatusMessage(status, "Project added.");
+  });
+}
+function renderAdminPosts(posts) {
+  const list = document.getElementById("post-list");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!posts.length) {
+    const row = document.createElement("div");
+    row.className = "admin-row";
+    row.setAttribute("role", "row");
+    const messageCell = document.createElement("span");
+    messageCell.setAttribute("role", "cell");
+    messageCell.textContent = "No posts drafted yet.";
+    row.appendChild(messageCell);
+    const dateCell = document.createElement("span");
+    dateCell.setAttribute("role", "cell");
+    row.appendChild(dateCell);
+    const tagCell = document.createElement("span");
+    tagCell.setAttribute("role", "cell");
+    row.appendChild(tagCell);
+    const actionCell = document.createElement("span");
+    actionCell.setAttribute("role", "cell");
+    row.appendChild(actionCell);
+    list.appendChild(row);
+    return;
+  }
+  posts
+    .slice()
+    .sort((a, b) => new Date(b.published || 0) - new Date(a.published || 0))
+    .forEach((post) => {
+      const row = document.createElement("div");
+      row.className = "admin-row";
+      row.setAttribute("role", "row");
+      row.dataset.id = post.id;
+      const title = document.createElement("span");
+      title.setAttribute("role", "cell");
+      title.textContent = post.title;
+      row.appendChild(title);
+      const dateCell = document.createElement("span");
+      dateCell.setAttribute("role", "cell");
+      dateCell.textContent = post.published ? new Date(post.published).toLocaleDateString() : "Draft";
+      row.appendChild(dateCell);
+      const tagsCell = document.createElement("span");
+      tagsCell.setAttribute("role", "cell");
+      tagsCell.textContent = post.tags?.join(", ") || "untagged";
+      row.appendChild(tagsCell);
+      const actions = document.createElement("span");
+      actions.setAttribute("role", "cell");
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "link-button";
+      removeButton.textContent = "Remove";
+      removeButton.addEventListener("click", () => {
+        const current = getSiteState().posts.filter((item) => item.id !== post.id);
+        setPosts(current);
+        renderAdminPosts(current);
+        setStatusMessage(document.getElementById("post-status"), "Post removed.");
+      });
+      actions.appendChild(removeButton);
+      row.appendChild(actions);
+      list.appendChild(row);
+    });
+}
+function initPostForm(posts) {
+  const form = document.getElementById("post-form");
+  if (!form) return;
+  const titleField = form.querySelector("#post-title");
+  const imageField = form.querySelector("#post-image");
+  const imageAltField = form.querySelector("#post-image-alt");
+  const tagsField = form.querySelector("#post-tags");
+  const dateField = form.querySelector("#post-date");
+  const bodyField = form.querySelector("#post-body");
+  const status = document.getElementById("post-status");
+  renderAdminPosts(posts);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const newPost = {
+      id: crypto.randomUUID ? crypto.randomUUID() : `post-${Date.now()}`,
+      title: titleField.value.trim(),
+      body: bodyField.value.trim(),
+      tags: tagsField.value
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+      published: dateField.value || null,
+    };
+    const imageUrl = imageField.value.trim();
+    const imageAlt = imageAltField.value.trim();
+    if (imageUrl) {
+      newPost.image = { src: imageUrl, alt: imageAlt };
+    }
+    const current = getSiteState().posts;
+    const updated = [...current, newPost];
+    setPosts(updated);
+    renderAdminPosts(updated);
+    form.reset();
+    setStatusMessage(status, "Post created.");
+  });
+}
+function initAdmin() {
+  const state = getSiteState();
+  initSectionsForm(state.sections);
+  initProjectForm(state.portfolio);
+  initPostForm(state.posts);
+}
+function animate() {
+  // 🛑 Do NOT clear the canvas
+  requestAnimationFrame(animate);
+  particles.forEach(p => p.draw());
+function initCanvasTrail() {
+  const canvas = document.getElementById("background-canvas");
+  const ctx = canvas?.getContext("2d");
+  if (!canvas || !ctx) return;
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+  let hue = 0;
+  const particles = [];
+  const MAX_PARTICLES = 4;
+  class Particle {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+      this.hue = hue;
+      this.radius = 26;
+      this.life = 1;
+      this.decay = 0.08;
+    }
+    update() {
+      this.life -= this.decay;
+      this.radius *= 0.96;
+    }
+    draw() {
+      ctx.save();
+      ctx.globalAlpha = Math.max(this.life, 0);
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.strokeStyle = `hsl(${this.hue}, 90%, 65%)`;
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ctx.restore();
+    }
+    isAlive() {
+      return this.life > 0 && this.radius > 6;
+    }
+  }
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = particles.length - 1; i >= 0; i -= 1) {
+      const particle = particles[i];
+      particle.update();
+      particle.draw();
+      if (!particle.isAlive()) {
+        particles.splice(i, 1);
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+  window.addEventListener("mousemove", (event) => {
+    if (particles.length >= MAX_PARTICLES) {
+      particles.shift();
+    }
+    particles.push(new Particle(event.clientX, event.clientY));
+    hue = (hue + 60) % 360;
+  });
+}
+animate();
+window.addEventListener("mousemove", (e) => {
+  if (particles.length >= 5) particles.shift(); // keep only 5
+  particles.push(new Particle(e.clientX, e.clientY));
+  hue = (hue + 30) % 360;
+document.addEventListener("DOMContentLoaded", () => {
+  ensureDefaults();
+  updateYear();
+  initTabs();
+  initCanvasTrail();
+  if (document.body.classList.contains("admin")) {
+    initAdmin();
+  } else {
+    renderSiteView();
+    window.addEventListener("storage", (event) => {
+      if (!event.key || !KEY_TO_GROUP[event.key]) {
+        return;
+      }
+      refreshSiteView();
+    });
+  }
+});
+style.css
++397
+-120
+
+Apply changes and continue locally?
