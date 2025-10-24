@@ -590,6 +590,93 @@ function renderProjectAdminList(projects) {
     list.appendChild(row);
     return;
   }
+  if (typeof sections.portfolioIntro === "string" && sections.portfolioIntro.trim()) {
+    base.portfolioIntro = sections.portfolioIntro.trim();
+  }
+  if (sections.contact && typeof sections.contact === "object") {
+    base.contact = { ...base.contact };
+    for (const key of Object.keys(base.contact)) {
+      if (typeof sections.contact[key] === "string" && sections.contact[key].trim()) {
+        base.contact[key] = sections.contact[key].trim();
+      }
+    }
+  }
+  return base;
+}
+
+function normalizeProjects(projects) {
+  if (!Array.isArray(projects)) return clone(DEFAULT_DATA.projects);
+  return projects
+    .map((project, index) => {
+      if (!project || typeof project !== "object") return null;
+      const title = typeof project.title === "string" ? project.title.trim() : "";
+      const description = typeof project.description === "string" ? project.description.trim() : "";
+      if (!title || !description) return null;
+      const normalized = {
+        id: typeof project.id === "string" && project.id.trim() ? project.id : `project-${index + 1}`,
+        title,
+        description
+      };
+      if (project.media && typeof project.media === "object" && typeof project.media.src === "string") {
+        const src = project.media.src.trim();
+        if (src) {
+          normalized.media = {
+            src,
+            alt: typeof project.media.alt === "string" && project.media.alt.trim() ? project.media.alt.trim() : title
+          };
+        }
+      }
+      return normalized;
+    })
+    .filter(Boolean);
+}
+
+function normalizePosts(posts) {
+  if (!Array.isArray(posts)) return clone(DEFAULT_DATA.posts);
+  return posts
+    .map((post, index) => {
+      if (!post || typeof post !== "object") return null;
+      const title = typeof post.title === "string" ? post.title.trim() : "";
+      const body = typeof post.body === "string" ? post.body.trim() : "";
+      if (!title || !body) return null;
+      const normalized = {
+        id: typeof post.id === "string" && post.id.trim() ? post.id : `post-${index + 1}`,
+        title,
+        body,
+        tags: Array.isArray(post.tags)
+          ? post.tags
+              .map((tag) => (typeof tag === "string" ? tag.trim() : ""))
+              .filter(Boolean)
+          : [],
+        published:
+          typeof post.published === "string" && post.published.trim() ? post.published.trim() : new Date().toISOString().slice(0, 10)
+      };
+      if (post.image && typeof post.image === "object" && typeof post.image.src === "string") {
+        const src = post.image.src.trim();
+        if (src) {
+          normalized.image = {
+            src,
+            alt: typeof post.image.alt === "string" && post.image.alt.trim() ? post.image.alt.trim() : title
+          };
+        }
+      }
+      return normalized;
+    })
+    .filter(Boolean);
+}
+
+function loadState() {
+  if (!canUseStorage) return clone(DEFAULT_DATA);
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  if (!stored) return clone(DEFAULT_DATA);
+  const parsed = safeParse(stored);
+  if (!parsed) return clone(DEFAULT_DATA);
+  return {
+    sections: normalizeSections(parsed.sections),
+    projects: normalizeProjects(parsed.projects),
+    posts: normalizePosts(parsed.posts)
+  };
+}
 
   projects.forEach((project) => {
     const row = document.createElement("div");
