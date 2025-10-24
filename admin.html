@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin | Robin Spahn</title>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="script.js"></script>
+</head>
+<body class="admin">
+  <canvas id="background-canvas" aria-hidden="true"></canvas>
+
+  <header class="admin-header">
+    <div class="container">
+      <a class="back-link" href="index.html">← Back to site</a>
+      <h1>Site Administration</h1>
+      <p>Draft new content, update portfolio highlights, and schedule blog posts.</p>
+    </div>
+  </header>
+
+  <main class="container admin-main">
+    <section class="admin-section">
+      <h2>Update Page Sections</h2>
+      <form class="admin-form" id="sections-form" aria-label="Update site sections">
+        <label for="about-text">
+          About content
+          <textarea id="about-text" rows="6" placeholder="Write your about section..."></textarea>
+        </label>
+        <label for="portfolio-intro-text">
+          Portfolio intro
+          <textarea id="portfolio-intro-text" rows="3" placeholder="Set the tone for your portfolio..."></textarea>
+        </label>
+        <fieldset>
+          <legend>Contact links</legend>
+          <label for="contact-email">
+            Email
+            <input type="email" id="contact-email" placeholder="hello@example.com" />
+          </label>
+          <label for="contact-instagram">
+            Instagram
+            <input type="url" id="contact-instagram" placeholder="https://instagram.com/yourhandle" />
+          </label>
+          <label for="contact-facebook">
+            Facebook
+            <input type="url" id="contact-facebook" placeholder="https://facebook.com/yourprofile" />
+          </label>
+          <label for="contact-linkedin">
+            LinkedIn
+            <input type="url" id="contact-linkedin" placeholder="https://linkedin.com/in/yourprofile" />
+          </label>
+        </fieldset>
+        <button type="submit">Save section updates</button>
+        <p class="form-status" id="sections-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="admin-section">
+      <h2>Portfolio Projects</h2>
+      <form class="admin-form" id="project-form" aria-label="Add portfolio project">
+        <label for="project-title">
+          Title
+          <input type="text" id="project-title" required placeholder="Project name" />
+        </label>
+        <label for="project-description">
+          Description
+          <textarea id="project-description" rows="4" required placeholder="What makes this project special?"></textarea>
+        </label>
+        <label for="project-media">
+          Featured media URL (optional)
+          <input type="url" id="project-media" placeholder="https://example.com/demo.png" />
+        </label>
+        <label for="project-media-alt">
+          Media description
+          <input type="text" id="project-media-alt" placeholder="Describe the media or placeholder" />
+        </label>
+        <button type="submit">Add project</button>
+        <p class="form-status" id="project-status" role="status" aria-live="polite"></p>
+      </form>
+      <div class="admin-table admin-table--projects" role="table" aria-label="Saved projects">
+        <div class="admin-row admin-row--head" role="row">
+          <span role="columnheader">Project</span>
+          <span role="columnheader">Actions</span>
+        </div>
+        <div id="project-list" role="rowgroup"></div>
+      </div>
+    </section>
+
+    <section class="admin-section">
+      <h2>Create Blog Post</h2>
+      <form class="admin-form" id="post-form" aria-label="Create a blog post">
+        <label for="post-title">
+          Title
+          <input type="text" id="post-title" required placeholder="Post title" />
+        </label>
+        <label for="post-image">
+          Featured image URL
+          <input type="url" id="post-image" placeholder="https://example.com/image.jpg" />
+        </label>
+        <label for="post-image-alt">
+          Image description
+          <input type="text" id="post-image-alt" placeholder="Describe the featured image" />
+        </label>
+        <label for="post-tags">
+          Tags (comma separated)
+          <input type="text" id="post-tags" placeholder="ai, community, art" />
+        </label>
+        <label for="post-date" class="inline">
+          Publish date
+          <input type="date" id="post-date" />
+        </label>
+        <label for="post-body">
+          Body
+          <textarea id="post-body" rows="8" required placeholder="Write the full post here..."></textarea>
+        </label>
+        <button type="submit">Publish</button>
+        <p class="form-status" id="post-status" role="status" aria-live="polite"></p>
+      </form>
+      <div class="admin-table admin-table--posts" role="table" aria-label="Scheduled posts">
+        <div class="admin-row admin-row--head" role="row">
+          <span role="columnheader">Title</span>
+          <span role="columnheader">Publish Date</span>
+          <span role="columnheader">Tags</span>
+          <span role="columnheader">Actions</span>
+        </div>
+        <div id="post-list" role="rowgroup"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© <span id="year"></span> Robin Spahn. Admin dashboard.</p>
+  </footer>
+</body>
+</html>
