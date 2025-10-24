@@ -1,42 +1,175 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Robin Spahn - Queer AI developer blending community, tech, and creativity." />
-  <title>Robin Spahn</title>
-  <link rel="stylesheet" href="style.css" />
-  <script defer src="script.js"></script>
-</head>
-<body>
-  <canvas id="background-canvas"></canvas>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Robin Spahn</title>
+    <link rel="stylesheet" href="style.css" />
+    <script defer src="script.js"></script>
+  </head>
+  <body>
+    <div class="site-top-bar" aria-hidden="true"></div>
+    <canvas id="background-canvas" aria-hidden="true"></canvas>
 
-  <header>
-    <div class="container">
-      <img src="website_banner.png" alt="Banner" class="site-banner" />
-      <h1>Robin Spahn</h1>
-      <nav>
-        <ul>
-          <li><a href="#about">About</a></li>
-          <li><a href="#projects">Projects</a></li>
-          <li><a href="#experience">Experience</a></li>
-          <li><a href="#portfolio">Portfolio</a></li>
-          <li><a href="#blog">Blog</a></li>
-          <li><a href="#contact">Contact Me</a></li>
-          <li><button id="theme-toggle">🌓</button></li>
-        </ul>
+    <header class="site-header">
+      <img class="site-banner" src="website_banner.png" alt="Rainbow gradient banner" />
+    </header>
+
+    <main class="container">
+      <nav class="tab-nav" role="tablist" aria-label="Site sections">
+        <button
+          type="button"
+          id="tab-about"
+          class="tab-button active"
+          data-tab-target="about"
+          role="tab"
+          aria-selected="true"
+          aria-controls="about-panel"
+        >
+          About
+        </button>
+        <button
+          type="button"
+          id="tab-portfolio"
+          class="tab-button"
+          data-tab-target="portfolio"
+          role="tab"
+          aria-selected="false"
+          aria-controls="portfolio-panel"
+        >
+          Portfolio
+        </button>
+        <button
+          type="button"
+          id="tab-blog"
+          class="tab-button"
+          data-tab-target="blog"
+          role="tab"
+          aria-selected="false"
+          aria-controls="blog-panel"
+        >
+          Blog
+        </button>
+        <button
+          type="button"
+          id="tab-contact"
+          class="tab-button"
+          data-tab-target="contact"
+          role="tab"
+          aria-selected="false"
+          aria-controls="contact-panel"
+        >
+          Contact Me
+        </button>
       </nav>
-    </div>
-  </header>
 
-  <section class="hero">
-    <div class="container">
-      <h2>AI Builder, Organizer, Creative 🏳️‍🌈</h2>
-      <p>Exploring the intersection of tech, community, and art.</p>
-      <a href="#projects" class="btn">View My Work</a>
-    </div>
-  </section>
+      <section
+        id="about-panel"
+        class="tab-panel active"
+        data-tab-panel="about"
+        role="tabpanel"
+        aria-labelledby="tab-about"
+      >
+        <h2>Hi, I’m Robin</h2>
+        <div class="rich-text" data-about-text>
+          <p>
+            I’m a queer AI developer who uses code to build welcoming spaces online. My work blends
+            playful experimentation with intentional tools that support community care.
+          </p>
+          <p>
+            When I’m not iterating on new ideas, you can find me collaborating with grassroots teams,
+            documenting what we’re learning, and sharing resources with other builders.
+          </p>
+        </div>
+      </section>
 
-  <!-- Other sections unchanged for placeholder support -->
-</body>
+      <section
+        id="portfolio-panel"
+        class="tab-panel"
+        data-tab-panel="portfolio"
+        role="tabpanel"
+        aria-labelledby="tab-portfolio"
+        hidden
+      >
+        <h2>Portfolio</h2>
+        <p class="intro-text" data-portfolio-intro>
+          Here are a few projects I’m nurturing right now. Each card leaves room for demos, videos, or
+          live embeds as they come together.
+        </p>
+        <div class="portfolio-grid" data-portfolio-grid role="list"></div>
+      </section>
+
+      <section
+        id="blog-panel"
+        class="tab-panel"
+        data-tab-panel="blog"
+        role="tabpanel"
+        aria-labelledby="tab-blog"
+        hidden
+      >
+        <h2>Blog</h2>
+        <p class="intro-text">
+          Browse recent reflections, tutorials, and project updates. Use the filters to focus on the
+          stories you want to read.
+        </p>
+        <form id="blog-filter-form" class="blog-filters" aria-label="Filter blog posts">
+          <label for="start-date">
+            Start date
+            <input type="date" id="start-date" name="start-date" />
+          </label>
+          <label for="end-date">
+            End date
+            <input type="date" id="end-date" name="end-date" />
+          </label>
+          <label for="tag-filter">
+            Tag
+            <select id="tag-filter" name="tag-filter">
+              <option value="">All tags</option>
+            </select>
+          </label>
+          <div class="filter-actions">
+            <button type="submit">Apply</button>
+            <button type="reset" class="secondary">Reset</button>
+          </div>
+        </form>
+        <div class="blog-grid" data-blog-grid></div>
+        <p class="empty-state" data-blog-empty hidden>No posts match your filters yet.</p>
+      </section>
+
+      <section
+        id="contact-panel"
+        class="tab-panel"
+        data-tab-panel="contact"
+        role="tabpanel"
+        aria-labelledby="tab-contact"
+        hidden
+      >
+        <h2>Contact Me</h2>
+        <p class="intro-text">Reach out anytime. I love connecting with new collaborators.</p>
+        <div class="contact-icons" data-contact-list role="list">
+          <a class="contact-link" role="listitem" href="mailto:hello@example.com">
+            <span aria-hidden="true">📧</span>
+            <span>hello@example.com</span>
+          </a>
+          <a class="contact-link" role="listitem" href="https://instagram.com/yourhandle" target="_blank" rel="noopener noreferrer">
+            <span aria-hidden="true">📸</span>
+            <span>@yourhandle</span>
+          </a>
+          <a class="contact-link" role="listitem" href="https://facebook.com/yourprofile" target="_blank" rel="noopener noreferrer">
+            <span aria-hidden="true">📘</span>
+            <span>facebook.com/yourprofile</span>
+          </a>
+          <a class="contact-link" role="listitem" href="https://linkedin.com/in/yourprofile" target="_blank" rel="noopener noreferrer">
+            <span aria-hidden="true">💼</span>
+            <span>linkedin.com/in/yourprofile</span>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>© <span id="year"></span> Robin Spahn. All rights reserved.</p>
+      <p><a class="admin-link" href="admin.html">Admin dashboard</a></p>
+    </footer>
+  </body>
 </html>
