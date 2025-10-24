@@ -1,4 +1,115 @@
 <!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Robin Spahn - Queer AI developer blending community, tech, and creativity." />
+  <title>Robin Spahn</title>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <canvas id="background-canvas" aria-hidden="true"></canvas>
+
+  <header class="site-header">
+    <img src="website_banner.png" alt="Banner" class="site-banner" />
+  </header>
+
+  <main class="container">
+    <nav class="tab-nav" role="tablist" aria-label="Primary">
+      <button
+        id="tab-about"
+        class="tab-button active"
+        data-tab="about"
+        role="tab"
+        aria-selected="true"
+        aria-controls="about"
+      >
+        About
+      </button>
+      <button
+        id="tab-portfolio"
+        class="tab-button"
+        data-tab="portfolio"
+        role="tab"
+        aria-selected="false"
+        aria-controls="portfolio"
+      >
+        Portfolio
+      </button>
+      <button
+        id="tab-blog"
+        class="tab-button"
+        data-tab="blog"
+        role="tab"
+        aria-selected="false"
+        aria-controls="blog"
+      >
+        Blog
+      </button>
+      <button
+        id="tab-contact"
+        class="tab-button"
+        data-tab="contact"
+        role="tab"
+        aria-selected="false"
+        aria-controls="contact"
+      >
+        Contact Me
+      </button>
+    </nav>
+
+    <section id="about" class="tab-panel active" role="tabpanel" aria-labelledby="tab-about">
+      <h2>Hi, I'm Robin</h2>
+      <div id="about-content" class="rich-text"></div>
+    </section>
+
+    <section id="portfolio" class="tab-panel" role="tabpanel" aria-labelledby="tab-portfolio" hidden>
+      <h2>Portfolio</h2>
+      <p class="intro-text" id="portfolio-intro"></p>
+      <div class="portfolio-grid" id="portfolio-grid" role="list"></div>
+      <p id="portfolio-empty" class="empty-state" hidden>No projects saved yet. Use the admin page to add your work.</p>
+    </section>
+
+    <section id="blog" class="tab-panel" role="tabpanel" aria-labelledby="tab-blog" hidden>
+      <h2>Blog</h2>
+      <p class="intro-text">Essays, notes, and dispatches from ongoing experiments. Filter by date or tags to dig into specific themes.</p>
+      <form class="blog-filters" aria-label="Blog filters" id="blog-filter-form">
+        <div class="filter-group">
+          <label for="start-date">Start date</label>
+          <input type="date" id="start-date" name="start-date" />
+        </div>
+        <div class="filter-group">
+          <label for="end-date">End date</label>
+          <input type="date" id="end-date" name="end-date" />
+        </div>
+        <div class="filter-group">
+          <label for="tag-filter">Tags</label>
+          <select id="tag-filter" name="tag-filter">
+            <option value="">All tags</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button type="submit">Apply filters</button>
+          <button type="reset" class="secondary">Reset</button>
+        </div>
+      </form>
+      <div class="blog-grid" id="blog-grid"></div>
+      <p id="blog-empty" class="empty-state" hidden>No posts match your filters yet. Try another selection.</p>
+    </section>
+
+    <section id="contact" class="tab-panel" role="tabpanel" aria-labelledby="tab-contact" hidden>
+      <h2>Contact Me</h2>
+      <p class="intro-text">Let's collaborate! Reach out via any of the channels below.</p>
+      <div class="contact-icons" id="contact-list" role="list"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© <span id="year"></span> Robin Spahn. All rights reserved.</p>
+    <a class="admin-link" href="admin.html">Admin</a>
+  </footer>
+</body>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
