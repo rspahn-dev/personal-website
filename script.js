@@ -1,58 +1,54 @@
-const STORAGE_KEY = "site-content";
+const STORAGE_KEY = "site-data";
 
-const DEFAULT_CONTENT = {
-  sections: {
-    about: [
-      "I'm a queer AI developer and community organizer who loves building empowering tools and joyful experiences.",
-      "From leading hackathons to mentoring new technologists, I thrive where creativity and technology intersect.",
-      "This site highlights the collaborations and experiments I'm most proud of."
-    ].join("\n\n"),
-    portfolioIntro:
-      "A snapshot of in-progress and completed work. Each project saves room to embed a live demo or video when it's ready.",
-    contact: {
-      email: "hello@example.com",
-      instagram: "https://instagram.com/yourhandle",
-      facebook: "https://facebook.com/yourprofile",
-      linkedin: "https://linkedin.com/in/yourprofile"
-    }
+const DEFAULT_STATE = {
+  about:
+    "I’m Robin, a queer AI developer blending code, care, and community. This space collects my favorite projects and the stories behind them.",
+  portfolioIntro:
+    "Here are a few collaborative experiments and commissions. Each tile can host a demo, video, or screenshot as projects evolve.",
+  contact: {
+    email: "hello@example.com",
+    instagram: "https://instagram.com/yourhandle",
+    facebook: "https://facebook.com/yourprofile",
+    linkedin: "https://linkedin.com/in/yourprofile"
   },
   projects: [
     {
-      id: "community-signal-boost",
+      id: "project-1",
       title: "Community Signal Boost",
       description:
-        "A platform that curates mutual aid requests and shares them with local networks in real time. The dashboard will live here soon.",
+        "A platform that curates mutual aid requests and amplifies them across neighborhood networks in real time.",
       media: {
         src: "work1.png",
-        alt: "Screenshot of Community Signal Boost"
+        alt: "Screenshot from Community Signal Boost"
       }
     },
     {
-      id: "xr-storytelling-lab",
+      id: "project-2",
       title: "XR Storytelling Lab",
       description:
-        "Immersive storytelling experiments blending motion capture, AI-generated scenery, and collaborative workshops.",
-      media: null
-    },
-    {
-      id: "activist-data-commons",
-      title: "Activist Data Commons",
-      description:
-        "Privacy-first data tools that help organizers measure impact without compromising community safety.",
+        "Immersive storytelling experiments blending motion capture, AI generated scenery, and collaborative workshops.",
       media: null
     }
   ],
   posts: [
     {
-      id: "designing-for-joyful-mutual-aid",
+      id: "post-1",
       title: "Designing for Joyful Mutual Aid",
-      body: "Exploring how community-driven design makes digital mutual aid spaces more welcoming and sustainable.",
+      body: "Exploring how community-driven design keeps digital mutual aid spaces welcoming and sustainable.",
       image: {
         src: "website_banner.png",
         alt: "Abstract rainbow banner"
       },
-      tags: ["community", "activism"],
+      tags: ["community", "design"],
       published: "2024-05-12"
+    },
+    {
+      id: "post-2",
+      title: "Teaching Machines to Listen",
+      body: "Notes from a workshop on building empathetic AI assistants alongside grassroots organizers.",
+      image: null,
+      tags: ["ai", "workshop"],
+      published: "2024-03-18"
     }
   ]
 };
@@ -65,547 +61,50 @@ const CONTACT_ICONS = {
 };
 
 const hasWindow = typeof window !== "undefined";
-const supportsRandomUUID =
-  hasWindow && window.crypto && typeof window.crypto.randomUUID === "function";
 
-function generateId(prefix) {
-  if (supportsRandomUUID) {
-    return `${prefix}-${window.crypto.randomUUID()}`;
+function deepClone(value) {
+  if (typeof structuredClone === "function") {
+    return structuredClone(value);
   }
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).slice(2, 8);
-  return `${prefix}-${timestamp}-${random}`;
+  return JSON.parse(JSON.stringify(value));
 }
 
 function supportsLocalStorage() {
+  if (!hasWindow) return false;
   try {
-    const key = "__storage_test__";
-    window.localStorage.setItem(key, key);
-    window.localStorage.removeItem(key);
+    const testKey = "__storage_test__";
+    window.localStorage.setItem(testKey, testKey);
+    window.localStorage.removeItem(testKey);
     return true;
   } catch (error) {
-    console.warn("Local storage unavailable; using in-memory store.");
+    console.warn("Local storage is unavailable; changes will reset on refresh.");
     return false;
   }
 }
 
 const canUseStorage = supportsLocalStorage();
-const hasStructuredClone = typeof structuredClone === "function";
-let memoryState = hasStructuredClone
-  ? structuredClone(DEFAULT_CONTENT)
-  : JSON.parse(JSON.stringify(DEFAULT_CONTENT));
 
-function clone(value) {
-  return hasStructuredClone ? structuredClone(value) : JSON.parse(JSON.stringify(value));
-}
-
-function normalizeSections(sections) {
-  const base = clone(DEFAULT_CONTENT.sections);
-  if (!sections || typeof sections !== "object") {
-    return base;
-  }
-
-  if (typeof sections.about === "string") {
-    base.about = sections.about;
-  }
-
-  if (typeof sections.portfolioIntro === "string") {
-    base.portfolioIntro = sections.portfolioIntro;
-  }
-
-  if (sections.contact && typeof sections.contact === "object") {
-    const contact = { ...base.contact };
-    ["email", "instagram", "facebook", "linkedin"].forEach((key) => {
-      if (typeof sections.contact[key] === "string") {
-        contact[key] = sections.contact[key];
-      }
-    });
-    base.contact = contact;
-  }
-
-  return base;
-}
-
-function normalizeProjects(projects) {
-  if (!Array.isArray(projects)) {
-    return clone(DEFAULT_CONTENT.projects);
-  }
-
-  return projects
-    .map((project, index) => {
-      if (!project || typeof project !== "object") {
-        return null;
-      }
-
-      const title = typeof project.title === "string" ? project.title.trim() : "";
-      const description =
-        typeof project.description === "string" ? project.description.trim() : "";
-
-      if (!title || !description) {
-        return null;
-      }
-
-      const normalized = {
-        id:
-          typeof project.id === "string" && project.id.trim()
-            ? project.id
-            : generateId(`project-${index + 1}`),
-        title,
-        description
-      };
-
-      if (project.media && typeof project.media === "object") {
-        const src = typeof project.media.src === "string" ? project.media.src.trim() : "";
-        if (src) {
-          normalized.media = {
-            src,
-            alt:
-              typeof project.media.alt === "string" && project.media.alt.trim()
-                ? project.media.alt
-                : title
-          };
-        }
-      }
-
-      return normalized;
-    })
-    .filter(Boolean);
-}
-
-function normalizePosts(posts) {
-  if (!Array.isArray(posts)) {
-    return clone(DEFAULT_CONTENT.posts);
-  }
-
-  return posts
-    .map((post, index) => {
-      if (!post || typeof post !== "object") {
-        return null;
-      }
-
-      const title = typeof post.title === "string" ? post.title.trim() : "";
-      const body = typeof post.body === "string" ? post.body.trim() : "";
-      if (!title || !body) {
-        return null;
-      }
-
-      const normalized = {
-        id:
-          typeof post.id === "string" && post.id.trim()
-            ? post.id
-            : generateId(`post-${index + 1}`),
-        title,
-        body,
-        tags: Array.isArray(post.tags)
-          ? post.tags
-              .map((tag) => (typeof tag === "string" ? tag.trim() : ""))
-              .filter(Boolean)
-          : [],
-        published: typeof post.published === "string" ? post.published : ""
-      };
-
-      if (post.image && typeof post.image === "object") {
-        const src = typeof post.image.src === "string" ? post.image.src.trim() : "";
-        if (src) {
-          normalized.image = {
-            src,
-            alt:
-              typeof post.image.alt === "string" && post.image.alt.trim()
-                ? post.image.alt
-                : title
-          };
-        }
-      }
-
-      return normalized;
-    })
-    .filter(Boolean);
-}
-
-function normalizeContent(rawContent) {
-  const source = rawContent && typeof rawContent === "object" ? rawContent : {};
-  return {
-    sections: normalizeSections(source.sections),
-    projects: normalizeProjects(source.projects),
-    posts: normalizePosts(source.posts)
-  };
-}
-
-function loadContent() {
-  if (!canUseStorage) {
-    return clone(normalizeContent(memoryState));
-  }
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
-    const normalized = normalizeContent(DEFAULT_CONTENT);
-    saveContent(normalized);
-    return clone(normalized);
-  }
+function safeParse(json) {
   try {
-    const parsed = JSON.parse(raw);
-    return normalizeContent(parsed);
+    return JSON.parse(json);
   } catch (error) {
-    console.warn("Unable to parse stored content; restoring defaults.");
-    const normalized = normalizeContent(DEFAULT_CONTENT);
-    saveContent(normalized);
-    return clone(normalized);
+    return null;
   }
 }
 
-function saveContent(content) {
-  const normalized = normalizeContent(content);
-  if (!canUseStorage) {
-    memoryState = clone(normalized);
-    return;
-  }
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-}
-
-function updateYear() {
-  const yearEl = document.getElementById("year");
-  if (yearEl) {
-    yearEl.textContent = new Date().getFullYear();
-  }
-}
-
-function initTabs() {
-  const nav = document.querySelector(".tab-nav");
-  if (!nav) return;
-
-  const buttons = Array.from(nav.querySelectorAll("[role='tab']"));
-
-  function activateTab(button) {
-    buttons.forEach((btn) => {
-      const isActive = btn === button;
-      btn.classList.toggle("active", isActive);
-      btn.setAttribute("aria-selected", String(isActive));
-      btn.tabIndex = isActive ? 0 : -1;
-      const panel = document.getElementById(btn.dataset.tab);
-      if (panel) {
-        panel.classList.toggle("active", isActive);
-        panel.hidden = !isActive;
-      }
-    });
-    button.focus();
-  }
-
-  buttons.forEach((button) => {
-    button.addEventListener("click", () => activateTab(button));
-    button.addEventListener("keydown", (event) => {
-      const currentIndex = buttons.indexOf(button);
-      if (event.key === "ArrowRight") {
-        event.preventDefault();
-        const next = buttons[(currentIndex + 1) % buttons.length];
-        activateTab(next);
-      }
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        const prev = buttons[(currentIndex - 1 + buttons.length) % buttons.length];
-        activateTab(prev);
-      }
-    });
-  });
-}
-
-function renderAbout(section) {
-  const container = document.getElementById("about-content");
-  if (!container) return;
-  container.innerHTML = "";
-  const aboutText =
-    typeof section.about === "string" && section.about.trim()
-      ? section.about
-      : DEFAULT_CONTENT.sections.about;
-
-  const paragraphs = aboutText
-    .split(/\n\n+/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
-
-  paragraphs.forEach((paragraph) => {
-    const p = document.createElement("p");
-    p.textContent = paragraph;
-    container.appendChild(p);
-  });
-}
-
-function renderPortfolioIntro(section) {
-  const intro = document.getElementById("portfolio-intro");
-  if (intro) {
-    intro.textContent = section.portfolioIntro || "";
-  }
-}
-
-function createProjectCard(project) {
-  const article = document.createElement("article");
-  article.className = "portfolio-card";
-  article.setAttribute("role", "listitem");
-
-  if (project.media?.src) {
-    const img = document.createElement("img");
-    img.src = project.media.src;
-    img.alt = project.media.alt || project.title;
-    article.appendChild(img);
-  }
-
-  const header = document.createElement("header");
-  const title = document.createElement("h3");
-  title.textContent = project.title;
-  header.appendChild(title);
-  article.appendChild(header);
-
-  const description = document.createElement("p");
-  description.textContent = project.description;
-  article.appendChild(description);
-
-  const placeholder = document.createElement("div");
-  placeholder.className = "project-placeholder";
-  placeholder.textContent = "Space reserved for a live demo or media embed.";
-  article.appendChild(placeholder);
-
-  return article;
-}
-
-function renderPortfolio(projects) {
-  const grid = document.getElementById("portfolio-grid");
-  const empty = document.getElementById("portfolio-empty");
-  if (!grid || !empty) return;
-
-  grid.innerHTML = "";
-  if (!projects.length) {
-    empty.hidden = false;
-    return;
-  }
-
-  projects.forEach((project) => {
-    grid.appendChild(createProjectCard(project));
-  });
-  empty.hidden = true;
-}
-
-function createPostCard(post) {
-  const article = document.createElement("article");
-  article.className = "blog-card";
-  article.setAttribute("role", "listitem");
-
-  if (post.image?.src) {
-    const img = document.createElement("img");
-    img.src = post.image.src;
-    img.alt = post.image.alt || post.title;
-    article.appendChild(img);
-  }
-
-  const header = document.createElement("header");
-  const title = document.createElement("h3");
-  title.textContent = post.title;
-  header.appendChild(title);
-
-  if (post.published) {
-    const meta = document.createElement("p");
-    meta.className = "meta";
-    const date = new Date(post.published);
-    meta.textContent = `Published ${date.toLocaleDateString()}`;
-    header.appendChild(meta);
-  }
-
-  article.appendChild(header);
-
-  const body = document.createElement("p");
-  body.textContent = post.body;
-  article.appendChild(body);
-
-  if (post.tags?.length) {
-    const tagList = document.createElement("ul");
-    tagList.className = "tag-list";
-    post.tags.forEach((tag) => {
-      const li = document.createElement("li");
-      li.textContent = tag;
-      tagList.appendChild(li);
-    });
-    article.appendChild(tagList);
-  }
-
-  return article;
-}
-
-function renderBlogPosts(posts) {
-  const grid = document.getElementById("blog-grid");
-  const empty = document.getElementById("blog-empty");
-  if (!grid || !empty) return;
-
-  grid.innerHTML = "";
-  if (!posts.length) {
-    empty.hidden = false;
-    return;
-  }
-
-  posts
-    .slice()
-    .sort((a, b) => new Date(b.published || 0) - new Date(a.published || 0))
-    .forEach((post) => grid.appendChild(createPostCard(post)));
-
-  empty.hidden = true;
-}
-
-function renderContact(contact) {
-  const list = document.getElementById("contact-list");
-  if (!list) return;
-  list.innerHTML = "";
-
-  Object.entries(contact).forEach(([key, value]) => {
-    if (!value) return;
-    const item = document.createElement("a");
-    item.href = key === "email" ? `mailto:${value}` : value;
-    item.className = "contact-item";
-    item.setAttribute("role", "listitem");
-    if (key === "email") {
-      item.removeAttribute("target");
-      item.removeAttribute("rel");
-    } else {
-      item.target = "_blank";
-      item.rel = "noreferrer noopener";
-    }
-    item.innerHTML = `<span class="icon">${CONTACT_ICONS[key] || "🔗"}</span><span>${value}</span>`;
-    list.appendChild(item);
-  });
-}
-
-function populateTagFilter(posts) {
-  const select = document.getElementById("tag-filter");
-  if (!select) return;
-  const currentValue = select.value;
-
-  const tags = new Set();
-  posts.forEach((post) => post.tags?.forEach((tag) => tags.add(tag)));
-  const sorted = Array.from(tags).sort((a, b) => a.localeCompare(b));
-
-  select.innerHTML = "";
-  const defaultOption = document.createElement("option");
-  defaultOption.value = "";
-  defaultOption.textContent = "All tags";
-  select.appendChild(defaultOption);
-
-  sorted.forEach((tag) => {
-    const option = document.createElement("option");
-    option.value = tag;
-    option.textContent = tag;
-    if (tag === currentValue) {
-      option.selected = true;
-    }
-    select.appendChild(option);
-  });
-}
-
-let siteContent = null;
-
-function applyFilters() {
-  if (!siteContent) return;
-  const form = document.getElementById("blog-filter-form");
-  if (!form) {
-    renderBlogPosts(siteContent.posts);
-    return;
-  }
-
-  const start = form.querySelector("#start-date").value;
-  const end = form.querySelector("#end-date").value;
-  const tag = form.querySelector("#tag-filter").value;
-
-  let filtered = siteContent.posts.slice();
-  if (start) {
-    filtered = filtered.filter((post) => !post.published || post.published >= start);
-  }
-  if (end) {
-    filtered = filtered.filter((post) => !post.published || post.published <= end);
-  }
-  if (tag) {
-    filtered = filtered.filter((post) => post.tags?.includes(tag));
-  }
-  renderBlogPosts(filtered);
-}
-
-function initBlogFilters() {
-  const form = document.getElementById("blog-filter-form");
-  if (!form) return;
-
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    applyFilters();
-  });
-
-  form.addEventListener("reset", () => {
-    requestAnimationFrame(() => {
-      applyFilters();
-    });
-  });
-}
-
-function refreshSite(content) {
-  siteContent = content;
-  renderAbout(content.sections);
-  renderPortfolioIntro(content.sections);
-  renderPortfolio(content.projects);
-  renderContact(content.sections.contact);
-  populateTagFilter(content.posts);
-  applyFilters();
-}
-
-function initSite() {
-  siteContent = loadContent();
-  refreshSite(siteContent);
-  initBlogFilters();
-
-  window.addEventListener("storage", (event) => {
-    if (event.key === STORAGE_KEY) {
-      refreshSite(loadContent());
-    }
-  });
-}
-
-function setStatusMessage(target, message) {
-  if (!target) return;
-  target.textContent = message;
-  if (!message) return;
-  setTimeout(() => {
-    if (target.textContent === message) {
-      target.textContent = "";
-    }
-  }, 3500);
-}
-
-function renderProjectAdminList(projects) {
-  const list = document.getElementById("project-list");
-  if (!list) return;
-  list.innerHTML = "";
-
-  if (!projects.length) {
-    const row = document.createElement("div");
-    row.className = "admin-row";
-    row.setAttribute("role", "row");
-    const emptyCell = document.createElement("span");
-    emptyCell.textContent = "No projects yet.";
-    emptyCell.setAttribute("role", "cell");
-    row.appendChild(emptyCell);
-    const spacer = document.createElement("span");
-    spacer.setAttribute("role", "cell");
-    row.appendChild(spacer);
-    list.appendChild(row);
-    return;
-  }
-  if (typeof sections.portfolioIntro === "string" && sections.portfolioIntro.trim()) {
-    base.portfolioIntro = sections.portfolioIntro.trim();
-  }
-  if (sections.contact && typeof sections.contact === "object") {
-    base.contact = { ...base.contact };
-    for (const key of Object.keys(base.contact)) {
-      if (typeof sections.contact[key] === "string" && sections.contact[key].trim()) {
-        base.contact[key] = sections.contact[key].trim();
-      }
+function normalizeContact(contact = {}) {
+  const base = { ...DEFAULT_STATE.contact };
+  for (const key of Object.keys(base)) {
+    const value = typeof contact[key] === "string" ? contact[key].trim() : "";
+    if (value) {
+      base[key] = value;
     }
   }
   return base;
 }
 
 function normalizeProjects(projects) {
-  if (!Array.isArray(projects)) return clone(DEFAULT_DATA.projects);
+  if (!Array.isArray(projects)) return deepClone(DEFAULT_STATE.projects);
   return projects
     .map((project, index) => {
       if (!project || typeof project !== "object") return null;
@@ -613,7 +112,7 @@ function normalizeProjects(projects) {
       const description = typeof project.description === "string" ? project.description.trim() : "";
       if (!title || !description) return null;
       const normalized = {
-        id: typeof project.id === "string" && project.id.trim() ? project.id : `project-${index + 1}`,
+        id: typeof project.id === "string" && project.id.trim() ? project.id.trim() : `project-${index + 1}`,
         title,
         description
       };
@@ -622,7 +121,8 @@ function normalizeProjects(projects) {
         if (src) {
           normalized.media = {
             src,
-            alt: typeof project.media.alt === "string" && project.media.alt.trim() ? project.media.alt.trim() : title
+            alt:
+              typeof project.media.alt === "string" && project.media.alt.trim() ? project.media.alt.trim() : `${title} preview`
           };
         }
       }
@@ -632,7 +132,7 @@ function normalizeProjects(projects) {
 }
 
 function normalizePosts(posts) {
-  if (!Array.isArray(posts)) return clone(DEFAULT_DATA.posts);
+  if (!Array.isArray(posts)) return deepClone(DEFAULT_STATE.posts);
   return posts
     .map((post, index) => {
       if (!post || typeof post !== "object") return null;
@@ -640,23 +140,24 @@ function normalizePosts(posts) {
       const body = typeof post.body === "string" ? post.body.trim() : "";
       if (!title || !body) return null;
       const normalized = {
-        id: typeof post.id === "string" && post.id.trim() ? post.id : `post-${index + 1}`,
+        id: typeof post.id === "string" && post.id.trim() ? post.id.trim() : `post-${index + 1}`,
         title,
         body,
         tags: Array.isArray(post.tags)
-          ? post.tags
-              .map((tag) => (typeof tag === "string" ? tag.trim() : ""))
-              .filter(Boolean)
+          ? post.tags.map((tag) => (typeof tag === "string" ? tag.trim() : "")).filter(Boolean)
           : [],
         published:
-          typeof post.published === "string" && post.published.trim() ? post.published.trim() : new Date().toISOString().slice(0, 10)
+          typeof post.published === "string" && post.published.trim()
+            ? post.published.trim()
+            : new Date().toISOString().slice(0, 10)
       };
       if (post.image && typeof post.image === "object" && typeof post.image.src === "string") {
         const src = post.image.src.trim();
         if (src) {
           normalized.image = {
             src,
-            alt: typeof post.image.alt === "string" && post.image.alt.trim() ? post.image.alt.trim() : title
+            alt:
+              typeof post.image.alt === "string" && post.image.alt.trim() ? post.image.alt.trim() : `${title} illustration`
           };
         }
       }
@@ -665,571 +166,545 @@ function normalizePosts(posts) {
     .filter(Boolean);
 }
 
-function loadState() {
-  if (!canUseStorage) return clone(DEFAULT_DATA);
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (!stored) return clone(DEFAULT_DATA);
-  const parsed = safeParse(stored);
-  if (!parsed) return clone(DEFAULT_DATA);
-  return {
-    sections: normalizeSections(parsed.sections),
-    projects: normalizeProjects(parsed.projects),
-    posts: normalizePosts(parsed.posts)
+function normalizeState(value = {}) {
+  const state = {
+    about: typeof value.about === "string" && value.about.trim() ? value.about.trim() : DEFAULT_STATE.about,
+    portfolioIntro:
+      typeof value.portfolioIntro === "string" && value.portfolioIntro.trim()
+        ? value.portfolioIntro.trim()
+        : DEFAULT_STATE.portfolioIntro,
+    contact: normalizeContact(value.contact),
+    projects: normalizeProjects(value.projects),
+    posts: normalizePosts(value.posts)
   };
+  return state;
 }
 
-  projects.forEach((project) => {
-    const row = document.createElement("div");
-    row.className = "admin-row";
-    row.setAttribute("role", "row");
+function loadState() {
+  if (!canUseStorage) return deepClone(DEFAULT_STATE);
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  if (!stored) return deepClone(DEFAULT_STATE);
+  const parsed = safeParse(stored);
+  if (!parsed) return deepClone(DEFAULT_STATE);
+  return normalizeState(parsed);
+}
 
-    const nameCell = document.createElement("span");
-    nameCell.textContent = project.title;
-    nameCell.setAttribute("role", "cell");
-    row.appendChild(nameCell);
+function saveState(state) {
+  if (!canUseStorage) return;
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
 
-    const actionCell = document.createElement("span");
-    actionCell.setAttribute("role", "cell");
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "link-button";
-    remove.textContent = "Remove";
-    remove.addEventListener("click", () => {
-      const content = loadContent();
-      content.projects = content.projects.filter((item) => item.id !== project.id);
-      saveContent(content);
-      renderProjectAdminList(content.projects);
-      setStatusMessage(document.getElementById("project-status"), "Project removed.");
-    });
-    actionCell.appendChild(remove);
-    row.appendChild(actionCell);
+let state = deepClone(DEFAULT_STATE);
 
-    list.appendChild(row);
+function formatDate(isoDate) {
+  if (!isoDate) return "";
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return isoDate;
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
   });
 }
 
-function renderPostAdminList(posts) {
-  const list = document.getElementById("post-list");
+function renderAbout() {
+  const container = document.querySelector("[data-about-text]");
+  if (!container) return;
+  container.innerHTML = "";
+  state.about.split(/\n+/).forEach((paragraph) => {
+    const trimmed = paragraph.trim();
+    if (!trimmed) return;
+    const p = document.createElement("p");
+    p.textContent = trimmed;
+    container.appendChild(p);
+  });
+}
+
+function renderPortfolio() {
+  const intro = document.querySelector("[data-portfolio-intro]");
+  const grid = document.querySelector("[data-portfolio-grid]");
+  if (intro) {
+    intro.textContent = state.portfolioIntro;
+  }
+  if (!grid) return;
+  grid.innerHTML = "";
+  state.projects.forEach((project) => {
+    const card = document.createElement("article");
+    card.className = "portfolio-card";
+    card.setAttribute("role", "listitem");
+
+    const title = document.createElement("h3");
+    title.textContent = project.title;
+    card.appendChild(title);
+
+    const description = document.createElement("p");
+    description.textContent = project.description;
+    card.appendChild(description);
+
+    if (project.media && project.media.src) {
+      const image = document.createElement("img");
+      image.src = project.media.src;
+      image.alt = project.media.alt || project.title;
+      card.appendChild(image);
+    } else {
+      const placeholder = document.createElement("div");
+      placeholder.className = "project-placeholder";
+      placeholder.textContent = "Space reserved for demos or embeds.";
+      card.appendChild(placeholder);
+    }
+
+    grid.appendChild(card);
+  });
+}
+
+function renderBlog() {
+  const grid = document.querySelector("[data-blog-grid]");
+  const empty = document.querySelector("[data-blog-empty]");
+  if (!grid || !empty) return;
+
+  const form = document.getElementById("blog-filter-form");
+  let startDate = "";
+  let endDate = "";
+  let tag = "";
+  if (form) {
+    const formData = new FormData(form);
+    startDate = formData.get("start-date") || "";
+    endDate = formData.get("end-date") || "";
+    tag = formData.get("tag-filter") || "";
+  }
+
+  const filtered = state.posts.filter((post) => {
+    if (startDate && post.published < startDate) return false;
+    if (endDate && post.published > endDate) return false;
+    if (tag && !post.tags.includes(tag)) return false;
+    return true;
+  });
+
+  grid.innerHTML = "";
+  filtered.forEach((post) => {
+    const card = document.createElement("article");
+    card.className = "blog-card";
+
+    const title = document.createElement("h3");
+    title.textContent = post.title;
+    card.appendChild(title);
+
+    const date = document.createElement("p");
+    date.className = "intro-text";
+    date.textContent = formatDate(post.published);
+    card.appendChild(date);
+
+    if (post.image && post.image.src) {
+      const image = document.createElement("img");
+      image.src = post.image.src;
+      image.alt = post.image.alt || post.title;
+      card.appendChild(image);
+    }
+
+    const body = document.createElement("p");
+    body.textContent = post.body;
+    card.appendChild(body);
+
+    if (post.tags.length) {
+      const tagList = document.createElement("div");
+      tagList.className = "tag-list";
+      post.tags.forEach((label) => {
+        const span = document.createElement("span");
+        span.className = "tag";
+        span.textContent = label;
+        tagList.appendChild(span);
+      });
+      card.appendChild(tagList);
+    }
+
+    grid.appendChild(card);
+  });
+
+  empty.hidden = filtered.length > 0;
+}
+
+function populateTagFilter() {
+  const select = document.getElementById("tag-filter");
+  if (!select) return;
+  const current = select.value;
+  select.innerHTML = '<option value="">All tags</option>';
+  const tags = new Set();
+  state.posts.forEach((post) => post.tags.forEach((tag) => tags.add(tag)));
+  Array.from(tags)
+    .sort((a, b) => a.localeCompare(b))
+    .forEach((tag) => {
+      const option = document.createElement("option");
+      option.value = tag;
+      option.textContent = tag;
+      if (tag === current) {
+        option.selected = true;
+      }
+      select.appendChild(option);
+    });
+}
+
+function renderContact() {
+  const list = document.querySelector("[data-contact-list]");
   if (!list) return;
   list.innerHTML = "";
+  Object.entries(state.contact).forEach(([key, value]) => {
+    if (!value) return;
+    const link = document.createElement("a");
+    link.className = "contact-link";
+    link.setAttribute("role", "listitem");
+    link.href = key === "email" ? `mailto:${value}` : value;
+    if (key !== "email") {
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    }
 
-  if (!posts.length) {
-    const row = document.createElement("div");
-    row.className = "admin-row";
-    row.setAttribute("role", "row");
+    const icon = document.createElement("span");
+    icon.textContent = CONTACT_ICONS[key] || "🔗";
+    icon.setAttribute("aria-hidden", "true");
 
-    ["No posts yet.", "", "", ""].forEach((text) => {
-      const cell = document.createElement("span");
-      cell.textContent = text;
-      cell.setAttribute("role", "cell");
-      row.appendChild(cell);
+    const label = document.createElement("span");
+    label.textContent =
+      key === "email" ? value : value.replace(/^https?:\/\/(www\.)?/i, "");
+
+    link.append(icon, label);
+    list.appendChild(link);
+  });
+}
+
+function renderSite() {
+  renderAbout();
+  renderPortfolio();
+  populateTagFilter();
+  renderBlog();
+  renderContact();
+}
+
+function setCurrentYear() {
+  const year = document.getElementById("year");
+  if (year) {
+    year.textContent = String(new Date().getFullYear());
+  }
+}
+
+function activateTab(target) {
+  const buttons = document.querySelectorAll("[data-tab-target]");
+  const panels = document.querySelectorAll("[data-tab-panel]");
+  buttons.forEach((button) => {
+    const isActive = button.dataset.tabTarget === target;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
+  panels.forEach((panel) => {
+    const isActive = panel.dataset.tabPanel === target;
+    panel.classList.toggle("active", isActive);
+    if (isActive) {
+      panel.removeAttribute("hidden");
+    } else {
+      panel.setAttribute("hidden", "");
+    }
+  });
+}
+
+function initTabs() {
+  const buttons = document.querySelectorAll("[data-tab-target]");
+  if (!buttons.length) return;
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = button.dataset.tabTarget;
+      if (target) {
+        activateTab(target);
+      }
     });
+  });
+}
 
-    list.appendChild(row);
+function initBlogFilters() {
+  const form = document.getElementById("blog-filter-form");
+  if (!form) return;
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    renderBlog();
+  });
+  form.addEventListener("reset", () => {
+    window.setTimeout(() => {
+      renderBlog();
+    }, 0);
+  });
+}
+
+function randomId(prefix) {
+  if (hasWindow && window.crypto && typeof window.crypto.randomUUID === "function") {
+    return `${prefix}-${window.crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function renderProjectTable() {
+  const tableBody = document.getElementById("project-list");
+  if (!tableBody) return;
+  tableBody.innerHTML = "";
+  if (!state.projects.length) {
+    const emptyRow = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 2;
+    cell.textContent = "No projects added yet.";
+    emptyRow.appendChild(cell);
+    tableBody.appendChild(emptyRow);
     return;
   }
-
-  posts
-    .slice()
-    .sort((a, b) => new Date(b.published || 0) - new Date(a.published || 0))
-    .forEach((post) => {
-      const row = document.createElement("div");
-      row.className = "admin-row";
-      row.setAttribute("role", "row");
-
-      const titleCell = document.createElement("span");
-      titleCell.textContent = post.title;
-      titleCell.setAttribute("role", "cell");
-      row.appendChild(titleCell);
-
-      const dateCell = document.createElement("span");
-      dateCell.textContent = post.published ? new Date(post.published).toLocaleDateString() : "Draft";
-      dateCell.setAttribute("role", "cell");
-      row.appendChild(dateCell);
-
-      const tagCell = document.createElement("span");
-      tagCell.textContent = post.tags?.join(", ") || "untagged";
-      tagCell.setAttribute("role", "cell");
-      row.appendChild(tagCell);
-
-      const actionCell = document.createElement("span");
-      actionCell.setAttribute("role", "cell");
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "link-button";
-      remove.textContent = "Remove";
-      remove.addEventListener("click", () => {
-        const content = loadContent();
-        content.posts = content.posts.filter((item) => item.id !== post.id);
-        saveContent(content);
-        renderPostAdminList(content.posts);
-        setStatusMessage(document.getElementById("post-status"), "Post removed.");
-      });
-      actionCell.appendChild(remove);
-      row.appendChild(actionCell);
-
-      list.appendChild(row);
+  state.projects.forEach((project) => {
+    const row = document.createElement("tr");
+    const titleCell = document.createElement("td");
+    titleCell.textContent = project.title;
+    const actionCell = document.createElement("td");
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "Remove";
+    remove.addEventListener("click", () => {
+      state.projects = state.projects.filter((item) => item.id !== project.id);
+      saveState(state);
+      renderPortfolio();
+      renderProjectTable();
     });
+    actionCell.appendChild(remove);
+    row.append(titleCell, actionCell);
+    tableBody.appendChild(row);
+  });
 }
 
-function initSectionsForm(content) {
-  const form = document.getElementById("sections-form");
-  if (!form) return;
+function renderPostTable() {
+  const tableBody = document.getElementById("post-list");
+  if (!tableBody) return;
+  tableBody.innerHTML = "";
+  if (!state.posts.length) {
+    const emptyRow = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 2;
+    cell.textContent = "No blog posts yet.";
+    emptyRow.appendChild(cell);
+    tableBody.appendChild(emptyRow);
+    return;
+  }
+  state.posts.forEach((post) => {
+    const row = document.createElement("tr");
+    const titleCell = document.createElement("td");
+    titleCell.textContent = `${post.title} — ${formatDate(post.published)}`;
+    const actionCell = document.createElement("td");
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "Remove";
+    remove.addEventListener("click", () => {
+      state.posts = state.posts.filter((item) => item.id !== post.id);
+      saveState(state);
+      populateTagFilter();
+      renderBlog();
+      renderPostTable();
+    });
+    actionCell.appendChild(remove);
+    row.append(titleCell, actionCell);
+    tableBody.appendChild(row);
+  });
+}
 
-  const aboutField = form.querySelector("#about-text");
-  const introField = form.querySelector("#portfolio-intro-text");
-  const emailField = form.querySelector("#contact-email");
-  const instagramField = form.querySelector("#contact-instagram");
-  const facebookField = form.querySelector("#contact-facebook");
-  const linkedinField = form.querySelector("#contact-linkedin");
-  const status = document.getElementById("sections-status");
+function bindAdminForms() {
+  if (!document.body.classList.contains("admin")) return;
 
-  aboutField.value = content.sections.about || "";
-  introField.value = content.sections.portfolioIntro || "";
-  emailField.value = content.sections.contact.email || "";
-  instagramField.value = content.sections.contact.instagram || "";
-  facebookField.value = content.sections.contact.facebook || "";
-  linkedinField.value = content.sections.contact.linkedin || "";
-
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const next = loadContent();
-    next.sections = {
-      about: aboutField.value.trim(),
-      portfolioIntro: introField.value.trim(),
-      contact: {
-        email: emailField.value.trim(),
-        instagram: instagramField.value.trim(),
-        facebook: facebookField.value.trim(),
-        linkedin: linkedinField.value.trim()
+  const sectionsForm = document.getElementById("sections-form");
+  if (sectionsForm) {
+    sectionsForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const data = new FormData(sectionsForm);
+      state = normalizeState({
+        ...state,
+        about: (data.get("about-text") || "").toString(),
+        portfolioIntro: (data.get("portfolio-intro-text") || "").toString(),
+        contact: {
+          email: (data.get("contact-email") || "").toString(),
+          instagram: (data.get("contact-instagram") || "").toString(),
+          facebook: (data.get("contact-facebook") || "").toString(),
+          linkedin: (data.get("contact-linkedin") || "").toString()
+        }
+      });
+      saveState(state);
+      renderAbout();
+      renderPortfolio();
+      renderContact();
+      const status = document.getElementById("sections-status");
+      if (status) {
+        status.textContent = "Details saved.";
+        window.setTimeout(() => {
+          status.textContent = "";
+        }, 2000);
       }
-    };
-    saveContent(next);
-    setStatusMessage(status, "Sections updated.");
-  });
+    });
+
+    const aboutField = sectionsForm.querySelector("#about-text");
+    const introField = sectionsForm.querySelector("#portfolio-intro-text");
+    const emailField = sectionsForm.querySelector("#contact-email");
+    const instagramField = sectionsForm.querySelector("#contact-instagram");
+    const facebookField = sectionsForm.querySelector("#contact-facebook");
+    const linkedinField = sectionsForm.querySelector("#contact-linkedin");
+    if (aboutField) aboutField.value = state.about;
+    if (introField) introField.value = state.portfolioIntro;
+    if (emailField) emailField.value = state.contact.email;
+    if (instagramField) instagramField.value = state.contact.instagram;
+    if (facebookField) facebookField.value = state.contact.facebook;
+    if (linkedinField) linkedinField.value = state.contact.linkedin;
+  }
+
+  const projectForm = document.getElementById("project-form");
+  if (projectForm) {
+    projectForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const data = new FormData(projectForm);
+      const title = (data.get("project-title") || "").toString().trim();
+      const description = (data.get("project-description") || "").toString().trim();
+      if (!title || !description) return;
+      const project = {
+        id: randomId("project"),
+        title,
+        description
+      };
+      const mediaUrl = (data.get("project-media") || "").toString().trim();
+      const mediaAlt = (data.get("project-media-alt") || "").toString().trim();
+      if (mediaUrl) {
+        project.media = {
+          src: mediaUrl,
+          alt: mediaAlt || `${title} preview`
+        };
+      }
+      state.projects = normalizeProjects([...state.projects, project]);
+      saveState(state);
+      projectForm.reset();
+      renderPortfolio();
+      renderProjectTable();
+      const status = document.getElementById("project-status");
+      if (status) {
+        status.textContent = "Project added.";
+        window.setTimeout(() => {
+          status.textContent = "";
+        }, 2000);
+      }
+    });
+  }
+
+  const postForm = document.getElementById("post-form");
+  if (postForm) {
+    postForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const data = new FormData(postForm);
+      const title = (data.get("post-title") || "").toString().trim();
+      const body = (data.get("post-body") || "").toString().trim();
+      if (!title || !body) return;
+      const rawTags = (data.get("post-tags") || "").toString();
+      const post = {
+        id: randomId("post"),
+        title,
+        body,
+        tags: rawTags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        published: (data.get("post-date") || "").toString().trim() || new Date().toISOString().slice(0, 10)
+      };
+      const imageUrl = (data.get("post-image") || "").toString().trim();
+      const imageAlt = (data.get("post-image-alt") || "").toString().trim();
+      if (imageUrl) {
+        post.image = {
+          src: imageUrl,
+          alt: imageAlt || `${title} illustration`
+        };
+      }
+      state.posts = normalizePosts([...state.posts, post]);
+      saveState(state);
+      postForm.reset();
+      populateTagFilter();
+      renderBlog();
+      renderPostTable();
+      const status = document.getElementById("post-status");
+      if (status) {
+        status.textContent = "Post published.";
+        window.setTimeout(() => {
+          status.textContent = "";
+        }, 2000);
+      }
+    });
+  }
+
+  renderProjectTable();
+  renderPostTable();
 }
 
-function initProjectForm(content) {
-  const form = document.getElementById("project-form");
-  if (!form) return;
-
-  const titleField = form.querySelector("#project-title");
-  const descriptionField = form.querySelector("#project-description");
-  const mediaField = form.querySelector("#project-media");
-  const mediaAltField = form.querySelector("#project-media-alt");
-  const status = document.getElementById("project-status");
-
-  renderProjectAdminList(content.projects);
-
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const next = loadContent();
-    const project = {
-      id: generateId("project"),
-      title: titleField.value.trim(),
-      description: descriptionField.value.trim()
-    };
-    const mediaUrl = mediaField.value.trim();
-    const mediaAlt = mediaAltField.value.trim();
-    if (mediaUrl) {
-      project.media = { src: mediaUrl, alt: mediaAlt };
-    }
-    next.projects = [...next.projects, project];
-    saveContent(next);
-    form.reset();
-    renderProjectAdminList(next.projects);
-    setStatusMessage(status, "Project added.");
-  });
-}
-
-function parseTags(value) {
-  return value
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean);
-}
-
-function initPostForm(content) {
-  const form = document.getElementById("post-form");
-  if (!form) return;
-
-  const titleField = form.querySelector("#post-title");
-  const imageField = form.querySelector("#post-image");
-  const imageAltField = form.querySelector("#post-image-alt");
-  const tagsField = form.querySelector("#post-tags");
-  const dateField = form.querySelector("#post-date");
-  const bodyField = form.querySelector("#post-body");
-  const status = document.getElementById("post-status");
-
-  renderPostAdminList(content.posts);
-
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const next = loadContent();
-    const post = {
-      id: generateId("post"),
-      title: titleField.value.trim(),
-      body: bodyField.value.trim(),
-      tags: parseTags(tagsField.value),
-      published: dateField.value
-    };
-    const imageUrl = imageField.value.trim();
-    if (imageUrl) {
-      post.image = { src: imageUrl, alt: imageAltField.value.trim() };
-    }
-    next.posts = [...next.posts, post];
-    saveContent(next);
-    form.reset();
-    renderPostAdminList(next.posts);
-    setStatusMessage(status, "Post saved.");
-  });
-}
-
-function initAdmin() {
-  const content = loadContent();
-  initSectionsForm(content);
-  initProjectForm(content);
-  initPostForm(content);
-}
-
-function initCanvasTrail() {
+function initParticles() {
   const canvas = document.getElementById("background-canvas");
-  if (!canvas) return;
+  if (!canvas || !canvas.getContext) return;
   const ctx = canvas.getContext("2d");
-  if (!ctx) return;
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+  canvas.width = width;
+  canvas.height = height;
+
+  const particles = [];
+  const maxParticles = 12;
+  let hue = 0;
 
   function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
   }
-  resize();
-  window.addEventListener("resize", resize);
 
-  let hue = 0;
-  const particles = [];
-  const MAX_PARTICLES = 6;
-
-  class Particle {
-    constructor(x, y) {
-      this.x = x;
-      this.y = y;
-      this.hue = hue;
-      this.life = 1;
-      this.radius = 22;
-      this.decay = 0.08;
-    }
-
-    update() {
-      this.life -= this.decay;
-      this.radius *= 0.94;
-    }
-
-    draw() {
-      ctx.save();
-      ctx.globalCompositeOperation = "lighter";
-      ctx.globalAlpha = Math.max(this.life, 0);
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, Math.max(this.radius, 4), 0, Math.PI * 2);
-      ctx.strokeStyle = `hsl(${this.hue}, 90%, 60%)`;
-      ctx.lineWidth = 4;
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    get alive() {
-      return this.life > 0;
+  function addParticle(x, y) {
+    particles.push({
+      x,
+      y,
+      radius: 26,
+      life: 1,
+      hue
+    });
+    if (particles.length > maxParticles) {
+      particles.splice(0, particles.length - maxParticles);
     }
   }
 
-  function tick() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  function update() {
+    ctx.clearRect(0, 0, width, height);
     for (let i = particles.length - 1; i >= 0; i -= 1) {
       const particle = particles[i];
-      particle.update();
-      if (!particle.alive) {
+      particle.life -= 0.025;
+      particle.radius *= 0.97;
+      if (particle.life <= 0.05) {
         particles.splice(i, 1);
         continue;
       }
-      particle.draw();
+      ctx.beginPath();
+      ctx.fillStyle = `hsla(${particle.hue}, 85%, 65%, ${particle.life})`;
+      ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+      ctx.fill();
     }
-    requestAnimationFrame(tick);
+    window.requestAnimationFrame(update);
   }
-
-  tick();
 
   window.addEventListener("mousemove", (event) => {
-    if (particles.length >= MAX_PARTICLES) {
-      particles.shift();
-    }
-    particles.push(new Particle(event.clientX, event.clientY));
-    hue = (hue + 45) % 360;
+    hue = (hue + 28) % 360;
+    addParticle(event.clientX, event.clientY);
   });
+
+  window.addEventListener("resize", resize);
+  update();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  updateYear();
+function initSite() {
+  state = loadState();
+  renderSite();
   initTabs();
-  initCanvasTrail();
-  if (document.body.classList.contains("admin")) {
-    initAdmin();
-  } else {
-    initSite();
-  }
-});
-* {
-  margin: 0;
-  padding: 0;
-  outline: 0;
+  initBlogFilters();
+  setCurrentYear();
+  bindAdminForms();
+  initParticles();
 }
 
-body {
-  padding: 80px 100px;
-  font: 13px "Helvetica Neue", "Lucida Grande", "Arial";
-  background: #ECE9E9 -webkit-gradient(linear, 0% 0%, 0% 100%, from(#fff), to(#ECE9E9));
-  background: #ECE9E9 -moz-linear-gradient(top, #fff, #ECE9E9);
-  background-repeat: no-repeat;
-  color: #555;
-  -webkit-font-smoothing: antialiased;
-}
-h1, h2, h3 {
-  font-size: 22px;
-  color: #343434;
-}
-h1 em, h2 em {
-  padding: 0 5px;
-  font-weight: normal;
-}
-h1 {
-  font-size: 60px;
-}
-h2 {
-  margin-top: 10px;
-}
-h3 {
-  margin: 5px 0 10px 0;
-  padding-bottom: 5px;
-  border-bottom: 1px solid #eee;
-  font-size: 18px;
-}
-ul li {
-  list-style: none;
-}
-ul li:hover {
-  cursor: pointer;
-  color: #2e2e2e;
-}
-ul li .path {
-  padding-left: 5px;
-  font-weight: bold;
-}
-ul li .line {
-  padding-right: 5px;
-  font-style: italic;
-}
-ul li:first-child .path {
-  padding-left: 0;
-}
-p {
-  line-height: 1.5;
-}
-a {
-  color: #555;
-  text-decoration: none;
-}
-a:hover {
-  color: #303030;
-}
-#stacktrace {
-  margin-top: 15px;
-}
-.directory h1 {
-  margin-bottom: 15px;
-  font-size: 18px;
-}
-ul#files {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-ul#files li {
-  float: left;
-  width: 30%;
-  line-height: 25px;
-  margin: 1px;
-}
-ul#files li a {
-  display: block;
-  height: 25px;
-  border: 1px solid transparent;
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
-  border-radius: 5px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-ul#files li a:focus,
-ul#files li a:hover {
-  background: rgba(255,255,255,0.65);
-  border: 1px solid #ececec;
-}
-ul#files li a.highlight {
-  -webkit-transition: background .4s ease-in-out;
-  background: #ffff4f;
-  border-color: #E9DC51;
-}
-#search {
-  display: block;
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  width: 90px;
-  -webkit-transition: width ease 0.2s, opacity ease 0.4s;
-  -moz-transition: width ease 0.2s, opacity ease 0.4s;
-  -webkit-border-radius: 32px;
-  -moz-border-radius: 32px;
-  -webkit-box-shadow: inset 0px 0px 3px rgba(0, 0, 0, 0.25), inset 0px 1px 3px rgba(0, 0, 0, 0.7), 0px 1px 0px rgba(255, 255, 255, 0.03);
-  -moz-box-shadow: inset 0px 0px 3px rgba(0, 0, 0, 0.25), inset 0px 1px 3px rgba(0, 0, 0, 0.7), 0px 1px 0px rgba(255, 255, 255, 0.03);
-  -webkit-font-smoothing: antialiased;
-  text-align: left;
-  font: 13px "Helvetica Neue", Arial, sans-serif;
-  padding: 4px 10px;
-  border: none;
-  background: transparent;
-  margin-bottom: 0;
-  outline: none;
-  opacity: 0.7;
-  color: #888;
-}
-#search:focus {
-  width: 120px;
-  opacity: 1.0; 
-}
-
-/*views*/
-#files span {
-  display: inline-block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-indent: 10px;
-}
-#files .name {
-  background-repeat: no-repeat;
-}
-#files .icon .name {
-  text-indent: 28px;
-}
-
-/*tiles*/
-.view-tiles .name {
-  width: 100%;
-  background-position: 8px 5px;
-}
-.view-tiles .size,
-.view-tiles .date {
-  display: none;
-}
-
-/*details*/
-ul#files.view-details li {
-  float: none;
-  display: block;
-  width: 90%;
-}
-ul#files.view-details li.header {
-  height: 25px;
-  background: #000;
-  color: #fff;
-  font-weight: bold;
-}
-.view-details .header {
-  border-radius: 5px;
-}
-.view-details .name {
-  width: 60%;
-  background-position: 8px 5px;
-}
-.view-details .size {
-  width: 10%;
-}
-.view-details .date {
-  width: 30%;
-}
-.view-details .size,
-.view-details .date {
-  text-align: right;
-  direction: rtl;
-}
-
-/*mobile*/
-@media (max-width: 768px) {
-  body {
-    font-size: 13px;
-    line-height: 16px;
-    padding: 0;
-  }
-  #search {
-    position: static;
-    width: 100%;
-    font-size: 2em;
-    line-height: 1.8em;
-    text-indent: 10px;
-    border: 0;
-    border-radius: 0;
-    padding: 10px 0;
-    margin: 0;
-  }
-  #search:focus {
-    width: 100%;
-    border: 0;
-    opacity: 1;
-  }
-  .directory h1 {
-    font-size: 2em;
-    line-height: 1.5em;
-    color: #fff;
-    background: #000;
-    padding: 15px 10px;
-    margin: 0;
-  }
-  ul#files {
-    border-top: 1px solid #cacaca;
-  }
-  ul#files li {
-    float: none;
-    width: auto !important;
-    display: block;
-    border-bottom: 1px solid #cacaca;
-    font-size: 2em;
-    line-height: 1.2em;
-    text-indent: 0;
-    margin: 0;
-  }
-  ul#files li:nth-child(odd) {
-    background: #e0e0e0;
-  }
-  ul#files li a {
-    height: auto;
-    border: 0;
-    border-radius: 0;
-    padding: 15px 10px;
-  }
-  ul#files li a:focus,
-  ul#files li a:hover {
-    border: 0;
-  }
-  #files .header,
-  #files .size,
-  #files .date {
-    display: none !important;
-  }
-  #files .name {
-    float: none;
-    display: inline-block;
-    width: 100%;
-    text-indent: 0;
-    background-position: 0 50%;
-  }
-  #files .icon .name {
-    text-indent: 41px;
-  }
+if (hasWindow) {
+  window.addEventListener("DOMContentLoaded", initSite);
 }
