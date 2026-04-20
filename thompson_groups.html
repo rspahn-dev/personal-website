@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thompson Group Element Visualizer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', monospace, sans-serif;
+      background: #0f1117; color: #c9d1d9;
+      min-height: 100vh; padding: 28px 24px;
+    }
+    h1 { font-size: 21px; font-weight: 600; color: #f0f6fc; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: #6e7681; margin-bottom: 20px; }
+    .group-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .group-row label { font-size: 13px; color: #8b949e; }
+    .btn-ex {
+      background: transparent; color: #6e7681; border: 1px solid #30363d;
+      border-radius: 6px; padding: 6px 11px; font-size: 12px; cursor: pointer; transition: all 0.12s;
+    }
+    .btn-ex:hover { border-color: #58a6ff; color: #58a6ff; }
+    details.panel {
+      background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+      margin-bottom: 14px; overflow: hidden;
+    }
+    summary.panel-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #8b949e; padding: 13px 20px;
+      cursor: pointer; user-select: none; list-style: none;
+    }
+    summary.panel-title::marker, summary.panel-title::-webkit-details-marker { display: none; }
+    summary.panel-title::after { content: '  \25b8'; }
+    details[open] summary.panel-title::after { content: '  \25be'; }
+    .panel-inner { padding: 0 20px 18px; }
+    .input-row { display: flex; gap: 14px; flex-wrap: wrap; }
+    .input-group { flex: 1; min-width: 180px; }
+    .input-group label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 5px; }
+    .input-group input {
+      width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+      color: #e6edf3; font-family: 'Courier New', monospace; font-size: 13px;
+      padding: 7px 10px; outline: none; transition: border-color 0.15s;
+    }
+    .input-group input:focus { border-color: #58a6ff; }
+    .hint { font-size: 11px; color: #8b949e; margin-top: 4px; }
+    .err  { font-size: 11px; color: #f85149; margin-top: 4px; min-height: 15px; }
+    .btn-load {
+      background: #238636; color: #fff; border: none; border-radius: 6px;
+      padding: 7px 14px; font-size: 12px; font-weight: 500; cursor: pointer; margin-top: 12px;
+    }
+    .btn-load:hover { background: #2ea043; }
+    .diagram-wrap {
+      background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+      padding: 20px; overflow: auto; min-height: 200px;
+      display: flex; justify-content: center; align-items: flex-start;
+    }
+    svg text { user-select: none; }
+    .elem-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 14px; }
+    .elem-panel { flex: 1; min-width: 320px; }
+    .elem-header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+    .elem-title { font-size: 16px; font-weight: 600; color: #f0f6fc; min-width: 28px; }
+    .mult-op { font-size: 28px; color: #4a6278; align-self: flex-start; padding: 0 4px; margin-top: 6px; }
+    .compute-row { display: flex; justify-content: center; margin-bottom: 14px; }
+    .btn-compute {
+      background: #1f4a2e; color: #56d364; border: 1px solid #56d364;
+      border-radius: 6px; padding: 8px 20px; font-size: 13px; cursor: pointer;
+    }
+    .btn-compute:hover { filter: brightness(1.2); }
+    .btn-use {
+      background: transparent; color: #8b949e; border: 1px solid #30363d;
+      border-radius: 5px; padding: 5px 11px; font-size: 12px; cursor: pointer;
+    }
+    .btn-use:hover { border-color: #58a6ff; color: #58a6ff; }
+    #result-panel { margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+<h1>Thompson Group Element Visualizer</h1>
+<p class="subtitle">Click T₊ leaves to split; click inner nodes to merge. In Braided mode: drag any strand to create a crossing.</p>
+
+<div class="group-row">
+  <label>Colors n =</label>
+  <input id="n-input" type="number" min="1" max="8" value="1"
+    style="width:52px;background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:4px 8px;font-size:13px"
+    onchange="onNChange()">
+  <label style="margin-left:16px;display:flex;align-items:center;gap:6px;cursor:pointer">
+    <input id="braided-check" type="checkbox" onchange="onBraidedChange()"> Braided (bV)
+  </label>
+</div>
+
+<div class="elem-row">
+  <div class="elem-panel" id="panel-0">
+    <div class="elem-header">
+      <span class="elem-title">E&#x2081;</span>
+      <button class="btn-ex" onclick="presetInto(0,'identity')">Identity</button>
+      <button class="btn-ex" onclick="presetInto(0,'x0')">x&#x2080; &isin; F</button>
+      <button class="btn-ex" onclick="presetInto(0,'x1')">x&#x2081; &isin; F</button>
+      <button class="btn-ex" onclick="presetInto(0,'rot3')">Rot &isin; T</button>
+      <button class="btn-ex" onclick="presetInto(0,'rot4')">4-rot &isin; T</button>
+      <button class="btn-ex" onclick="presetInto(0,'swap')">Swap &isin; V</button>
+      <button class="btn-ex" onclick="loadCrossPreset(0,'svg0')">Cross &isin; nV</button>
+      <button class="btn-ex" onclick="loadBraidedCrossPreset(0,'svg0')">BCross &isin; bV</button>
+    </div>
+    <details class="panel">
+      <summary class="panel-title">Edit text / load custom</summary>
+      <div class="panel-inner">
+        <div class="input-row" style="margin-top:12px">
+          <div class="input-group">
+            <label>T&#x208a; &mdash; top tree</label>
+            <input id="t1-0" type="text" value="(. .)">
+            <div class="hint"><code>.</code> = leaf &nbsp;|&nbsp; <code>(L R)</code> = node</div>
+            <div class="err" id="e-t1-0"></div>
+          </div>
+          <div class="input-group">
+            <label>T&#x208b; &mdash; bottom tree</label>
+            <input id="t2-0" type="text" value="(. .)">
+            <div class="hint">Same leaf count as T&#x208a;</div>
+            <div class="err" id="e-t2-0"></div>
+          </div>
+          <div class="input-group">
+            <label>Permutation &alpha; (1-indexed)</label>
+            <input id="perm-0" type="text" value="1 2">
+            <div class="hint">Space-separated</div>
+            <div class="err" id="e-perm-0"></div>
+          </div>
+        </div>
+        <button class="btn-load" onclick="loadIntoST(ST[0],'0','svg0')">Load</button>
+      </div>
+    </details>
+    <div class="diagram-wrap"><svg id="svg0"></svg></div>
+  </div>
+
+  <div class="mult-op">&times;</div>
+
+  <div class="elem-panel" id="panel-1">
+    <div class="elem-header">
+      <span class="elem-title">E&#x2082;</span>
+      <button class="btn-ex" onclick="presetInto(1,'identity')">Identity</button>
+      <button class="btn-ex" onclick="presetInto(1,'x0')">x&#x2080; &isin; F</button>
+      <button class="btn-ex" onclick="presetInto(1,'x1')">x&#x2081; &isin; F</button>
+      <button class="btn-ex" onclick="presetInto(1,'rot3')">Rot &isin; T</button>
+      <button class="btn-ex" onclick="presetInto(1,'rot4')">4-rot &isin; T</button>
+      <button class="btn-ex" onclick="presetInto(1,'swap')">Swap &isin; V</button>
+      <button class="btn-ex" onclick="loadCrossPreset(1,'svg1')">Cross &isin; nV</button>
+      <button class="btn-ex" onclick="loadBraidedCrossPreset(1,'svg1')">BCross &isin; bV</button>
+    </div>
+    <details class="panel">
+      <summary class="panel-title">Edit text / load custom</summary>
+      <div class="panel-inner">
+        <div class="input-row" style="margin-top:12px">
+          <div class="input-group">
+            <label>T&#x208a; &mdash; top tree</label>
+            <input id="t1-1" type="text" value="(. .)">
+            <div class="hint"><code>.</code> = leaf &nbsp;|&nbsp; <code>(L R)</code> = node</div>
+            <div class="err" id="e-t1-1"></div>
+          </div>
+          <div class="input-group">
+            <label>T&#x208b; &mdash; bottom tree</label>
+            <input id="t2-1" type="text" value="(. .)">
+            <div class="hint">Same leaf count as T&#x208a;</div>
+            <div class="err" id="e-t2-1"></div>
+          </div>
+          <div class="input-group">
+            <label>Permutation &alpha; (1-indexed)</label>
+            <input id="perm-1" type="text" value="1 2">
+            <div class="hint">Space-separated</div>
+            <div class="err" id="e-perm-1"></div>
+          </div>
+        </div>
+        <button class="btn-load" onclick="loadIntoST(ST[1],'1','svg1')">Load</button>
+      </div>
+    </details>
+    <div class="diagram-wrap"><svg id="svg1"></svg></div>
+  </div>
+</div>
+
+<div class="compute-row">
+  <button class="btn-compute" onclick="compute()">Compute E&#x2081; &times; E&#x2082;</button>
+</div>
+
+<div id="result-panel" style="display:none">
+  <div class="elem-header" style="margin-bottom:10px">
+    <span class="elem-title" style="min-width:unset;margin-right:8px">E&#x2081; &times; E&#x2082;</span>
+    <button class="btn-use" onclick="useResult(0)">&larr; Use as E&#x2081;</button>
+    <button class="btn-use" onclick="useResult(1)">Use as E&#x2082; &rarr;</button>
+  </div>
+  <div class="diagram-wrap"><svg id="svg-result"></svg></div>
+</div>
+
+<script>
+// ─── Parsing ──────────────────────────────────────────────────────────────────
+function tokenize(s) {
+  const toks = [];
+  for (const ch of s.trim()) {
+    if ('().'.includes(ch)) toks.push(ch);
+    else if (' \t\n\r'.includes(ch)) continue;
+    else throw new Error("Unexpected character '" + ch + "'");
+  }
+  return toks;
+}
+function parseTree(s) {
+  const toks = tokenize(s); let i = 0;
+  function next() { if (i >= toks.length) throw new Error('Unexpected end'); return toks[i++]; }
+  function parse() {
+    const tok = next();
+    if (tok === '.') return { leaf: true };
+    if (tok === '(') { const L = parse(), R = parse(); if (next() !== ')') throw new Error('Expected )'); return { L, R }; }
+    throw new Error("Unexpected '" + tok + "'");
+  }
+  const t = parse();
+  if (i < toks.length) throw new Error('Trailing characters');
+  return t;
+}
+function leafCount(t) { return t.leaf ? 1 : leafCount(t.L) + leafCount(t.R); }
+function rv(v) { return Math.round(v * 10) / 10; }
+
+// ─── Layout constants ─────────────────────────────────────────────────────────
+const SS   = 56;   // strand spacing (px)
+const LH   = 44;   // tree level height (px)
+const NR   = 6;    // node radius
+const PAD  = 48;   // canvas padding
+const BRAID_BASE  = 50;  // minimum braid zone height
+const BRAID_STEP  = 30;  // height per parallel crossing level
+const ARROW_GAP   = 68;  // gap between trees in non-braided mode
+const XHALF       = 10;  // half-height of a crossing X
+
+const COL       = '#7fa8c9';
+const COL_HOV   = '#a8cae4';
+const COL_SEL   = '#e3a047';
+const COL_LBL   = '#4a6278';
+const COL_NUM   = '#d4c060';  // leaf-index numbers — distinct from vertices (COL) and all edge colors
+const PALETTE   = ['#7fa8c9', '#c97fa8', '#a8c97f'];
+const EDGE_PALETTE = ['#e05252','#4fa8e8','#56d364','#f0a030','#c970e0','#70c0c0','#e0a070','#a070e0'];
+
+// ─── Config ───────────────────────────────────────────────────────────────────
+function cfg() {
+  const n = Math.max(1, parseInt(document.getElementById('n-input').value) || 1);
+  const braided = document.getElementById('braided-check').checked;
+  return { n, braided };
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+function makeState() {
+  return { reg: new Map(), nextId: 0, roots1: [], roots2: [], perm: [], braid: [], sel1: null, hovId: null, edgeColors: new Map(), braidH: null };
+}
+const ST = [makeState(), makeState()];
+let resultST = null;
+
+// Strand drag
+let _drag = null;          // { st, svgId, strand, sign, startX, startY, curX, curY, live }
+let _dragJustDone = false;
+
+// Braid-zone resize drag
+let _resizeDrag = null;    // { st, svgId, brTop, startY, startH }
+
+// ─── Registry ─────────────────────────────────────────────────────────────────
+function leavesOf(rootId, reg) {
+  const out = [];
+  (function go(id){ const nd = reg.get(id); if(nd.leaf){out.push(id);return;} go(nd.left); go(nd.right); })(rootId);
+  return out;
+}
+function lcBy(id, reg) { const nd = reg.get(id); return nd.leaf ? 1 : lcBy(nd.left,reg)+lcBy(nd.right,reg); }
+function importInto(st, parsed, par=null) {
+  const id = st.nextId++;
+  if (parsed.leaf) { st.reg.set(id,{id,leaf:true,left:null,right:null,parent:par}); return id; }
+  const nd = {id,leaf:false,left:null,right:null,parent:par}; st.reg.set(id,nd);
+  nd.left = importInto(st,parsed.L,id); nd.right = importInto(st,parsed.R,id); return id;
+}
+function gLeaves1(st) { return st.roots1.flatMap(r=>leavesOf(r,st.reg)); }
+function gLeaves2(st) { return st.roots2.flatMap(r=>leavesOf(r,st.reg)); }
+function gColor(roots, reg, k) {
+  let off=0;
+  for(let c=0;c<roots.length;c++){const cnt=lcBy(roots[c],reg); if(k<off+cnt)return{ci:c,li:k-off}; off+=cnt;}
+  return null;
+}
+
+// ─── Tree layout ─────────────────────────────────────────────────────────────
+// Leaves are evenly spaced. Nodes sit at horizontal midpoint of child subtree.
+// flip=true => y is negated (T₋ grows upward).
+function layoutTree(rootId, flip, reg) {
+  const dir = flip ? -1 : 1;
+  const nodes=[], edges=[], leaves=[];
+  let lc = 0;
+  function go(id, depth) {
+    const nd = reg.get(id);
+    if (nd.leaf) {
+      const x = lc * SS, y = 0; // leaves at y=0 relative, depth handled separately
+      // Actually place leaves at the bottom level of the tree
+      // We'll use a depth-based y for internal nodes, leaves at max depth
+      lc++;
+      const li = leaves.length;
+      // Compute proper y as dir * depth * LH
+      const yn = dir * depth * LH;
+      nodes.push({x, y:yn, id, leaf:true, leafIdx:li});
+      leaves.push({x, y:yn, id});
+      return { x, y: yn };
+    }
+    const xBefore = lc;
+    const lRes = go(nd.left,  depth+1);
+    const xMid1 = lc;
+    const rRes = go(nd.right, depth+1);
+    const xAfter = lc;
+    const x = (lRes.x + rRes.x) / 2;
+    const y = dir * depth * LH;
+    nodes.push({x, y, id, leaf:false, leafIdx:-1});
+    edges.push({x1:x,y1:y, x2:lRes.x,y2:lRes.y, parentId:id});
+    edges.push({x1:x,y1:y, x2:rRes.x,y2:rRes.y, parentId:id});
+    return {x, y};
+  }
+  go(rootId, 0);
+  return {nodes, edges, leaves};
+}
+
+// ─── Braid math ───────────────────────────────────────────────────────────────
+// Returns strandToSlot: strandToSlot[s] = final slot of strand s
+function braidToPerm(braid, n) {
+  const slot2str = Array.from({length:n},(_,i)=>i);
+  const str2slot = Array.from({length:n},(_,i)=>i);
+  for (const {i,sign} of braid) {
+    if (i<0||i+1>=n) continue;
+    const sA=slot2str[i], sB=slot2str[i+1];
+    slot2str[i]=sB; slot2str[i+1]=sA;
+    str2slot[sA]=i+1; str2slot[sB]=i;
+  }
+  return str2slot;
+}
+function braidInsertStrand(braid, at) {
+  return braid.map(({i,sign})=>({i: i>=at ? i+1 : i, sign}));
+}
+
+// ─── Mutations ────────────────────────────────────────────────────────────────
+function splitLeaf(st, leafId) {
+  const nd=st.reg.get(leafId);
+  const L=st.nextId++, R=st.nextId++;
+  st.reg.set(L,{id:L,leaf:true,left:null,right:null,parent:leafId});
+  st.reg.set(R,{id:R,leaf:true,left:null,right:null,parent:leafId});
+  nd.leaf=false; nd.left=L; nd.right=R;
+}
+function mergeNode(st, nodeId) {
+  const nd=st.reg.get(nodeId);
+  st.reg.delete(nd.left); st.reg.delete(nd.right);
+  nd.leaf=true; nd.left=null; nd.right=null;
+  st.edgeColors.delete(nodeId);
+}
+
+// ─── Perm math ────────────────────────────────────────────────────────────────
+function permSplit(perm,i,j) {
+  const out=new Array(perm.length+1);
+  for(let k=0;k<perm.length;k++){
+    const adj=perm[k]>=j+1?perm[k]+1:perm[k];
+    if(k<i)out[k]=adj; else if(k>i)out[k+1]=adj;
+  }
+  out[i]=j; out[i+1]=j+1; return out;
+}
+function permMerge(perm,i,j) {
+  const out=[]; let w=0;
+  for(let k=0;k<perm.length;k++){
+    if(k===i+1)continue;
+    out[w++]=perm[k]>j+1?perm[k]-1:perm[k];
+  }
+  return out;
+}
+function isMergeable(l1ids,l2ids,i,st) {
+  if(i<0||i+1>=l1ids.length)return false;
+  const a=st.reg.get(l1ids[i]),b=st.reg.get(l1ids[i+1]);
+  if(!a.parent||a.parent!==b.parent)return false;
+  const j=st.perm[i];
+  if(st.perm[i+1]!==j+1||j+1>=l2ids.length)return false;
+  const c=st.reg.get(l2ids[j]),d=st.reg.get(l2ids[j+1]);
+  return c.parent!==null&&c.parent===d.parent;
+}
+
+// ─── Cross-relation removal ───────────────────────────────────────────────────
+function isCrossRemovable(l1ids,l2ids,i,st) {
+  if (i+3>=l1ids.length) return false;
+  const ec=id=>st.edgeColors.has(id)?st.edgeColors.get(id):0;
+  const hasParent=nd=>nd.parent!==null&&nd.parent!==undefined;
+  const a1=st.reg.get(l1ids[i]),a2=st.reg.get(l1ids[i+1]);
+  const a3=st.reg.get(l1ids[i+2]),a4=st.reg.get(l1ids[i+3]);
+  if (!hasParent(a1)||a1.parent!==a2.parent) return false;
+  if (!hasParent(a3)||a3.parent!==a4.parent) return false;
+  const P1id=a1.parent,P2id=a3.parent;
+  const GP1nd=st.reg.get(P1id),GP2nd=st.reg.get(P2id);
+  if (!hasParent(GP1nd)||GP1nd.parent!==GP2nd.parent) return false;
+  const c1=ec(P1id),c2=ec(l1ids[i]);
+  if (ec(P2id)!==c1||c1===c2) return false;
+  if (ec(l1ids[i+1])!==c2||ec(l1ids[i+2])!==c2||ec(l1ids[i+3])!==c2) return false;
+  const j=st.perm[i];
+  if (j+3>=l2ids.length) return false;
+  if (st.perm[i+1]!==j+2||st.perm[i+2]!==j+1||st.perm[i+3]!==j+3) return false;
+  const b1=st.reg.get(l2ids[j]),b2=st.reg.get(l2ids[j+1]);
+  const b3=st.reg.get(l2ids[j+2]),b4=st.reg.get(l2ids[j+3]);
+  if (!hasParent(b1)||b1.parent!==b2.parent) return false;
+  if (!hasParent(b3)||b3.parent!==b4.parent) return false;
+  const GQ1nd=st.reg.get(b1.parent),GQ2nd=st.reg.get(b3.parent);
+  if (!hasParent(GQ1nd)||GQ1nd.parent!==GQ2nd.parent) return false;
+  if (ec(b1.parent)!==c2||ec(b3.parent)!==c2) return false;
+  if (ec(l2ids[j])!==c1||ec(l2ids[j+1])!==c1||ec(l2ids[j+2])!==c1||ec(l2ids[j+3])!==c1) return false;
+  return true;
+}
+function isBraidedCrossRemovable(l1ids,l2ids,i,st) {
+  if (!isCrossRemovable(l1ids,l2ids,i,st)) return false;
+  const inner=st.braid.filter(g=>g.i>=i&&g.i<=i+2);
+  return inner.length===1&&inner[0].i===i+1;
+}
+function collapseToLeaf(st,nodeId) {
+  function removeDesc(id) {
+    const nd=st.reg.get(id); if (!nd) return;
+    if (!nd.leaf){removeDesc(nd.left);removeDesc(nd.right);}
+    st.edgeColors.delete(id); st.reg.delete(id);
+  }
+  const nd=st.reg.get(nodeId);
+  if (nd&&!nd.leaf){removeDesc(nd.left);removeDesc(nd.right);nd.leaf=true;nd.left=null;nd.right=null;}
+}
+function permCrossRemove(perm,i,j) {
+  const res=[];
+  for (let k=0;k<perm.length;k++){
+    if (k===i+1||k===i+2||k===i+3) continue;
+    let v=perm[k]; if (v>j+3) v-=3; res.push(v);
+  }
+  return res;
+}
+function braidCrossRemove(braid,i) {
+  return braid.filter(g=>g.i<i||g.i>i+3).map(g=>({i:g.i>i+3?g.i-3:g.i,sign:g.sign}));
+}
+function permCrossExpand(perm,k,m) {
+  const res=[];
+  for (let i=0;i<perm.length;i++) {
+    if (i===k) { res.push(m,m+2,m+1,m+3); }
+    else { let v=perm[i]; if (v>m) v+=3; res.push(v); }
+  }
+  return res;
+}
+function braidCrossExpand(braid,k) {
+  const adj=braid.map(g=>({i:g.i>=k+1?g.i+3:g.i,sign:g.sign}));
+  adj.push({i:k+1,sign:+1});
+  return adj;
+}
+function crossSplitAt(st,k,braided) {
+  const l1ids=gLeaves1(st),l2ids=gLeaves2(st);
+  const m=st.perm[k];
+  // Expand T₊ leaf k into depth-2 subtree (P1=blue, P2=blue; leaves=red default)
+  const L1=l1ids[k];
+  splitLeaf(st,L1);
+  const L1nd=st.reg.get(L1);
+  st.edgeColors.set(L1nd.left,1); st.edgeColors.set(L1nd.right,1);
+  splitLeaf(st,L1nd.left); splitLeaf(st,L1nd.right);
+  // Expand T₋ leaf m into depth-2 subtree (Q1=red default, Q2=red default; leaves=blue)
+  const L2=l2ids[m];
+  splitLeaf(st,L2);
+  const L2nd=st.reg.get(L2);
+  splitLeaf(st,L2nd.left); splitLeaf(st,L2nd.right);
+  const Q1nd=st.reg.get(L2nd.left),Q2nd=st.reg.get(L2nd.right);
+  st.edgeColors.set(Q1nd.left,1); st.edgeColors.set(Q1nd.right,1);
+  st.edgeColors.set(Q2nd.left,1); st.edgeColors.set(Q2nd.right,1);
+  // Update permutation and braid
+  st.perm=permCrossExpand(st.perm,k,m);
+  if (braided) {
+    st.braid=braidCrossExpand(st.braid,k);
+    st.perm=braidToPerm(st.braid,gLeaves1(st).length);
+  }
+}
+
+// ─── Identity ─────────────────────────────────────────────────────────────────
+function initId(st) {
+  st.reg.clear(); st.nextId=0; st.sel1=null; st.hovId=null; st.braid=[]; st.edgeColors=new Map();
+  st.roots1=[importInto(st,{leaf:true})];
+  st.roots2=[importInto(st,{leaf:true})];
+  st.perm=[0];
+}
+
+// ─── SVG point helper ─────────────────────────────────────────────────────────
+function svgPt(svgEl, cx, cy) {
+  const pt=svgEl.createSVGPoint(); pt.x=cx; pt.y=cy;
+  return pt.matrixTransform(svgEl.getScreenCTM().inverse());
+}
+
+// ─── BV Render ───────────────────────────────────────────────────────────────
+function renderBV(st, svgId, n) {
+  const svg = document.getElementById(svgId);
+
+  const lay1 = layoutTree(st.roots1[0], false, st.reg);
+  const lay2 = layoutTree(st.roots2[0], true,  st.reg);
+  const nL   = lay1.leaves.length;
+  const ox   = PAD;
+
+  const h1 = Math.max(0, ...lay1.nodes.map(nd => nd.y));
+  const h2 = Math.max(0, ...lay2.nodes.map(nd => -nd.y));
+  const oy1 = PAD + 18;
+  const brTop = oy1 + h1 + 12;
+  const W = nL * SS + 2 * PAD;
+
+  // Strand positions at top/bottom of braid zone
+  const dPos = lay1.leaves.map(lf => ({x: lf.x + ox, id: lf.id}));
+  const rPos = lay2.leaves.map(lf => ({x: lf.x + ox, id: lf.id}));
+  const tot  = dPos.length;
+
+  const l1ids = dPos.map(p => p.id), l2ids = rPos.map(p => p.id);
+  const mergePar = new Set();
+  for (let i = 0; i+1 < tot; i++) if (isMergeable(l1ids,l2ids,i,st)) mergePar.add(st.reg.get(l1ids[i]).parent);
+  const crossRemPar = new Set();
+  for (let i = 0; i+3 < tot; i++) if (isBraidedCrossRemovable(l1ids,l2ids,i,st)) {
+    crossRemPar.add(st.reg.get(st.reg.get(l1ids[i]).parent).parent);
+    crossRemPar.add(st.reg.get(st.reg.get(l2ids[st.perm[i]]).parent).parent);
+  }
+
+  function edgeCol(nodeId) {
+    const ci = st.edgeColors.has(nodeId) ? st.edgeColors.get(nodeId) : 0;
+    return EDGE_PALETTE[ci % n];
+  }
+
+  // Fixed vertical lane x positions, one per strand
+  const slotX = dPos.map(p => p.x);
+
+  // ── Build the effective braid word (inject live drag preview) ──────────────
+  let effectiveBraid = st.braid;
+  let isDragging = _drag && _drag.svgId === svgId && _drag.live;
+  let dragInsertPos = -1, dragSlot = -1;
+  if (isDragging && tot >= 2) {
+    const estH = Math.max(BRAID_BASE, st.braid.length * BRAID_STEP + BRAID_BASE);
+    const estBot = brTop + estH;
+    const cy = _drag.curY;
+    if (cy >= brTop && cy <= estBot) {
+      let minD = Infinity;
+      for (let q = 0; q + 1 < tot; q++) {
+        const mid = (slotX[q] + slotX[q+1]) / 2;
+        if (Math.abs(_drag.curX - mid) < minD) { minD = Math.abs(_drag.curX - mid); dragSlot = q; }
+      }
+      const relY = (cy - brTop) / estH;
+      dragInsertPos = Math.max(0, Math.min(st.braid.length,
+        Math.round(relY * (st.braid.length + 1))));
+
+      // Simulate lanes up to the insert position to find which slot the dragged strand occupies
+      let simS2slot = Array.from({length: tot}, (_, i) => i);
+      let simSlot2s = Array.from({length: tot}, (_, i) => i);
+      for (let ci = 0; ci < dragInsertPos && ci < st.braid.length; ci++) {
+        const gi2 = st.braid[ci].i;
+        if (gi2 >= 0 && gi2 + 1 < tot) {
+          const sA2 = simSlot2s[gi2], sB2 = simSlot2s[gi2+1];
+          simSlot2s[gi2]=sB2; simSlot2s[gi2+1]=sA2;
+          simS2slot[sA2]=gi2+1; simS2slot[sB2]=gi2;
+        }
+      }
+      // The dragged strand is at slot simS2slot[_drag.strand].
+      // At the new crossing (slot dragSlot vs dragSlot+1), the dragged strand
+      // is sA if it's in slot dragSlot, sB if in slot dragSlot+1.
+      // sign>0 means sA is over. So: sign = draggedStrand===sA ? +1 : -1
+      const draggedSlot = simS2slot[_drag.strand];
+      let ghostSign;
+      if (draggedSlot === dragSlot) ghostSign = +1;       // dragged strand is sA → over
+      else if (draggedSlot === dragSlot + 1) ghostSign = -1; // dragged strand is sB → under? No: sB over = sign<0
+      else ghostSign = +1; // dragged strand not adjacent; default
+
+      // Wait: sign>0 → sA over, sign<0 → sB over. We want dragged strand over.
+      // If dragged is sA (slot==dragSlot): sign=+1 ✓
+      // If dragged is sB (slot==dragSlot+1): sign=-1 means sB over ✓
+      effectiveBraid = [...st.braid];
+      effectiveBraid.splice(dragInsertPos, 0, { i: dragSlot, sign: ghostSign, _ghost: true });
+    } else {
+      isDragging = false;
+    }
+  }
+
+  // ── Assign crossings to parallel levels ───────────────────────────────────
+  // Two crossings can share a level if they act on disjoint slot pairs.
+  const crossLevels = [];
+  const levelOccupied = []; // levelOccupied[lv] = Set of slots used
+  for (let ci = 0; ci < effectiveBraid.length; ci++) {
+    const gi = effectiveBraid[ci].i;
+    let lv = 0;
+    while (lv < levelOccupied.length) {
+      const used = levelOccupied[lv];
+      if (!used.has(gi) && !used.has(gi + 1) && !used.has(gi - 1)) break;
+      lv++;
+    }
+    crossLevels.push(lv);
+    if (lv >= levelOccupied.length) levelOccupied.push(new Set());
+    levelOccupied[lv].add(gi);
+    levelOccupied[lv].add(gi + 1);
+  }
+  const numLevels = levelOccupied.length || 0;
+
+  // ── Simulate braid ─────────────────────────────────────────────────────────
+  const braidH = st.braidH !== null
+    ? Math.max(BRAID_BASE, st.braidH)
+    : Math.max(BRAID_BASE, numLevels * BRAID_STEP + BRAID_BASE);
+  const brBot = brTop + braidH;
+  const oy2 = brBot + h2 + 12;
+  const H = oy2 + PAD + 44;
+
+  const levelY = Array.from({length: numLevels}, (_, lv) =>
+    brTop + (lv + 1) * braidH / (numLevels + 1));
+
+  let s2slot = Array.from({length: tot}, (_, i) => i);
+  let slot2s = Array.from({length: tot}, (_, i) => i);
+  const knots = Array.from({length: tot}, (_, s) => [{x: slotX[s], y: brTop}]);
+  const crossMeta = [];
+
+  for (let ci = 0; ci < effectiveBraid.length; ci++) {
+    const {i: gi, sign, _ghost} = effectiveBraid[ci];
+    const cy = levelY[crossLevels[ci]] ?? brTop + braidH / 2;
+    if (gi < 0 || gi + 1 >= tot) continue;
+    const sA = slot2s[gi], sB = slot2s[gi + 1];
+    const H2 = XHALF;
+    for (let s = 0; s < tot; s++)
+      knots[s].push({x: slotX[s2slot[s]], y: cy - H2});
+    slot2s[gi] = sB; slot2s[gi+1] = sA;
+    s2slot[sA] = gi + 1; s2slot[sB] = gi;
+    for (let s = 0; s < tot; s++)
+      knots[s].push({x: slotX[s2slot[s]], y: cy + H2});
+    const sOver = sign > 0 ? sA : sB;
+    const sUnder = sign > 0 ? sB : sA;
+    crossMeta.push({gi, cy, sign, sOver, sUnder, isGhost: !!_ghost});
+  }
+  for (let s = 0; s < tot; s++)
+    knots[s].push({x: rPos[st.perm[s]].x, y: brBot});
+
+  // Note: st.perm is maintained by click handlers (permSplit/permMerge) and
+  // recomputed from the braid only when crossings are added/removed.
+
+  // ── Helper: build a smooth SVG path string through a list of knots ─────────
+  // Uses cubic bezier with vertical tangents so strands look organic.
+  function strandPath(kts) {
+    if (kts.length < 2) return '';
+    let d = `M ${rv(kts[0].x)} ${rv(kts[0].y)}`;
+    for (let i = 1; i < kts.length; i++) {
+      const p0 = kts[i-1], p1 = kts[i];
+      const tension = Math.min(0.45, Math.abs(p1.y - p0.y) * 0.35);
+      const cy0 = p0.y + (p1.y - p0.y) * tension;
+      const cy1 = p1.y - (p1.y - p0.y) * tension;
+      d += ` C ${rv(p0.x)} ${rv(cy0)}, ${rv(p1.x)} ${rv(cy1)}, ${rv(p1.x)} ${rv(p1.y)}`;
+    }
+    return d;
+  }
+
+  // ── Build SVG ──────────────────────────────────────────────────────────────
+  let svg_s = '';
+
+  // Labels
+  svg_s += `<text x="${rv(ox)}" y="${rv(oy1-8)}" font-size="12" font-family="monospace" fill="${COL}" opacity="0.85" pointer-events="none">T&#x208a;</text>`;
+  svg_s += `<text x="${rv(ox)}" y="${rv(oy2+22)}" font-size="12" font-family="monospace" fill="${COL}" opacity="0.85" pointer-events="none">T&#x208b;</text>`;
+
+  // Tree edges — colored by edgeColors, with transparent hit area (n>1 only)
+  for (const e of lay1.edges) {
+    const cc = n > 1 ? edgeCol(e.parentId) : COL;
+    const x1=rv(e.x1+ox), y1=rv(e.y1+oy1), x2=rv(e.x2+ox), y2=rv(e.y2+oy1);
+    svg_s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${cc}" stroke-width="2" stroke-linecap="round" pointer-events="none"/>`;
+    if (n > 1) svg_s += `<line class="edge-hit" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="transparent" stroke-width="14" stroke-linecap="round" cursor="pointer" pointer-events="stroke" data-nodeid="${e.parentId}"/>`;
+  }
+  for (const e of lay2.edges) {
+    const cc = n > 1 ? edgeCol(e.parentId) : COL;
+    const x1=rv(e.x1+ox), y1=rv(e.y1+oy2), x2=rv(e.x2+ox), y2=rv(e.y2+oy2);
+    svg_s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${cc}" stroke-width="2" stroke-linecap="round" pointer-events="none"/>`;
+    if (n > 1) svg_s += `<line class="edge-hit" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="transparent" stroke-width="14" stroke-linecap="round" cursor="pointer" pointer-events="stroke" data-nodeid="${e.parentId}"/>`;
+  }
+
+  // Connector dashes: T₊ leaf → brTop, brBot → T₋ leaf
+  for (let s = 0; s < tot; s++) {
+    svg_s += `<line x1="${rv(dPos[s].x)}" y1="${rv(oy1)}" x2="${rv(dPos[s].x)}" y2="${rv(brTop)}" stroke="${COL}" stroke-width="1.5" opacity="0.22" stroke-dasharray="4 3" pointer-events="none"/>`;
+    svg_s += `<line x1="${rv(rPos[st.perm[s]].x)}" y1="${rv(brBot)}" x2="${rv(rPos[st.perm[s]].x)}" y2="${rv(oy2)}" stroke="${COL}" stroke-width="1.5" opacity="0.22" stroke-dasharray="4 3" pointer-events="none"/>`;
+  }
+
+  // ── Draw strands — always COL ──────────────────────────────────────────────
+  // Layer 0: full paths at base weight
+  for (let s = 0; s < tot; s++)
+    svg_s += `<path d="${strandPath(knots[s])}" stroke="${COL}" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5" pointer-events="none"/>`;
+
+  // Layer 1: crossings — mask + redraw over/under
+  for (let k = 0; k < crossMeta.length; k++) {
+    const {gi, cy, sign, sOver, sUnder, isGhost} = crossMeta[k];
+    const xL = slotX[gi], xR = slotX[gi+1];
+    const H2 = XHALF;
+    const mx = Math.min(xL, xR) - 5, mw = Math.abs(xR - xL) + 10;
+    svg_s += `<rect x="${rv(mx)}" y="${rv(cy-H2)}" width="${rv(mw)}" height="${rv(H2*2)}" fill="#0f1117" pointer-events="none"/>`;
+    const kiU = knots[sUnder].findIndex(p => Math.abs(p.y-(cy-H2))<1);
+    if (kiU >= 0 && kiU+1 < knots[sUnder].length)
+      svg_s += `<path d="${strandPath([knots[sUnder][kiU],knots[sUnder][kiU+1]])}" stroke="${COL}" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="${isGhost?0.2:0.3}" pointer-events="none"/>`;
+    const kiO = knots[sOver].findIndex(p => Math.abs(p.y-(cy-H2))<1);
+    if (kiO >= 0 && kiO+1 < knots[sOver].length)
+      svg_s += `<path d="${strandPath([knots[sOver][kiO],knots[sOver][kiO+1]])}" stroke="${COL}" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="${isGhost?0.5:1}" pointer-events="none"/>`;
+  }
+
+  // Layer 2: segments outside crossing zones at full weight
+  for (let s = 0; s < tot; s++) {
+    const kts = knots[s]; let run = [kts[0]];
+    for (let ki = 1; ki < kts.length; ki++) {
+      const p = kts[ki];
+      const inCross = crossMeta.some(cm => Math.abs(p.y-(cm.cy-XHALF))<1 || Math.abs(p.y-(cm.cy+XHALF))<1);
+      if (inCross) {
+        if (run.length >= 2) svg_s += `<path d="${strandPath(run)}" stroke="${COL}" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.88" pointer-events="none"/>`;
+        run = [p];
+      } else { run.push(p); }
+    }
+    if (run.length >= 2) svg_s += `<path d="${strandPath(run)}" stroke="${COL}" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.88" pointer-events="none"/>`;
+  }
+
+  // Wide invisible paths for strand drag initiation
+  for (let s = 0; s < tot; s++)
+    svg_s += `<path class="strand-drag" d="${strandPath(knots[s])}" stroke="transparent" stroke-width="18" fill="none" cursor="crosshair" pointer-events="stroke" data-strand="${s}"/>`;
+
+  // Cross-hit circles on top so they intercept clicks above the strand-drag paths
+  for (let k = 0; k < crossMeta.length; k++) {
+    const {gi, cy, isGhost} = crossMeta[k];
+    const xL = slotX[gi], xR = slotX[gi+1];
+    if (!isGhost)
+      svg_s += `<circle class="cross-hit" cx="${rv((xL+xR)/2)}" cy="${rv(cy)}" r="14" fill="transparent" cursor="pointer" pointer-events="all" data-ci="${k}"/>`;
+  }
+
+  // Node circles — T₊
+  for (const nd of lay1.nodes) {
+    const px = rv(nd.x+ox), py = rv(nd.y+oy1);
+    const isHov = nd.id === st.hovId;
+    const isMrg = !nd.leaf && mergePar.has(nd.id);
+    const isCR  = !nd.leaf && crossRemPar.has(nd.id);
+    const cur = nd.leaf ? 'cell' : (isMrg||isCR) ? 'zoom-out' : 'default';
+    if (isMrg) svg_s += `<circle cx="${px}" cy="${py}" r="12" fill="none" stroke="${COL}" stroke-dasharray="3 2" stroke-width="1.5" opacity="0.4" pointer-events="none"/>`;
+    if (isCR)  svg_s += `<circle cx="${px}" cy="${py}" r="16" fill="none" stroke="#e3b341" stroke-dasharray="4 3" stroke-width="1.5" opacity="0.55" pointer-events="none"/>`;
+    svg_s += `<circle class="hit" cx="${px}" cy="${py}" r="15" fill="transparent" style="cursor:${cur}" pointer-events="all" data-tree="1" data-id="${nd.id}" data-leaf="${nd.leaf}" data-li="${nd.leafIdx}" data-crossrm="${isCR?1:0}"/>`;
+    svg_s += `<circle cx="${px}" cy="${py}" r="${isHov?NR+2:NR}" fill="${isHov?COL_HOV:COL}" pointer-events="none"/>`;
+  }
+  // Node circles — T₋
+  const rMap2 = new Map(rPos.map((p,i) => [p.id, i]));
+  for (const nd of lay2.nodes) {
+    const px = rv(nd.x+ox), py = rv(nd.y+oy2);
+    const gi2 = nd.leaf ? rMap2.get(nd.id) : -1;
+    const isHov = nd.id === st.hovId;
+    let isMrg2 = false;
+    if (!nd.leaf && nd.left !== null) {
+      const j2 = l2ids.indexOf(nd.left);
+      if (j2 !== -1) { const i2 = st.perm.indexOf(j2); if (i2 !== -1) isMrg2 = isMergeable(l1ids,l2ids,i2,st); }
+    }
+    const isCR2 = !nd.leaf && crossRemPar.has(nd.id);
+    const cur2 = nd.leaf ? 'cell' : (isMrg2||isCR2) ? 'zoom-out' : 'default';
+    if (isMrg2) svg_s += `<circle cx="${px}" cy="${py}" r="12" fill="none" stroke="${COL}" stroke-dasharray="3 2" stroke-width="1.5" opacity="0.4" pointer-events="none"/>`;
+    if (isCR2)  svg_s += `<circle cx="${px}" cy="${py}" r="16" fill="none" stroke="#e3b341" stroke-dasharray="4 3" stroke-width="1.5" opacity="0.55" pointer-events="none"/>`;
+    svg_s += `<circle class="hit" cx="${px}" cy="${py}" r="15" fill="transparent" style="cursor:${cur2}" pointer-events="all" data-tree="2" data-id="${nd.id}" data-leaf="${nd.leaf}" data-li="${gi2}" data-crossrm="${isCR2?1:0}"/>`;
+    svg_s += `<circle cx="${px}" cy="${py}" r="${isHov?NR+2:NR}" fill="${isHov?COL_HOV:COL}" pointer-events="none"/>`;
+  }
+
+  // Leaf labels
+  dPos.forEach((p,i) => svg_s += `<text x="${rv(p.x)}" y="${rv(oy1+NR+16)}" text-anchor="middle" font-size="12" font-family="monospace" fill="${COL_NUM}" pointer-events="none">${i+1}</text>`);
+  rPos.forEach((p,i) => svg_s += `<text x="${rv(p.x)}" y="${rv(oy2-NR-8)}" text-anchor="middle" font-size="12" font-family="monospace" fill="${COL_NUM}" pointer-events="none">${i+1}</text>`);
+
+  // Braid word + hint
+  const bstr = st.braid.length === 0 ? 'e'
+    : st.braid.map(({i,sign}) => `\u03c3${i+1}${sign<0?'\u207b\u00b9':''}`).join('\u00b7');
+  svg_s += `<text x="${rv(PAD)}" y="${rv(H-7)}" font-size="11" font-family="monospace" fill="${COL}" opacity="0.85" pointer-events="none">\u03b2 = ${bstr}</text>`;
+  svg_s += `<text x="${rv(W/2)}" y="${rv(H-20)}" text-anchor="middle" font-size="11" font-family="monospace" fill="${COL}" opacity="0.9" pointer-events="none">leaf: split  \u00b7  shift-leaf: \u2A2F-split  \u00b7  \u2299: merge</text>`;
+  svg_s += `<text x="${rv(W/2)}" y="${rv(H-7)}" text-anchor="middle" font-size="11" font-family="monospace" fill="${COL}" opacity="0.9" pointer-events="none">drag: \u03c3  \u00b7  shift-drag: \u03c3\u207b\u00b9  \u00b7  click crossing: remove  \u00b7  shift-click crossing: toggle \u00b1</text>`;
+
+  // Braid-zone resize grip — bottom-right corner handle
+  const gx = W - PAD + 6, gy = brBot;
+  svg_s += `<g class="braid-resize" cursor="ns-resize" pointer-events="all" data-brtop="${brTop}" data-braidh="${braidH}">`;
+  svg_s += `<rect x="${rv(gx-14)}" y="${rv(gy-10)}" width="20" height="20" fill="transparent"/>`;
+  // Draw a small double-chevron "⇕" indicator
+  svg_s += `<line x1="${rv(gx-6)}" y1="${rv(gy-4)}" x2="${rv(gx)}" y2="${rv(gy)}" stroke="${COL}" stroke-width="1.5" stroke-linecap="round" opacity="0.5" pointer-events="none"/>`;
+  svg_s += `<line x1="${rv(gx)}" y1="${rv(gy)}" x2="${rv(gx+6)}" y2="${rv(gy-4)}" stroke="${COL}" stroke-width="1.5" stroke-linecap="round" opacity="0.5" pointer-events="none"/>`;
+  svg_s += `<line x1="${rv(gx-6)}" y1="${rv(gy+4)}" x2="${rv(gx)}" y2="${rv(gy)}" stroke="${COL}" stroke-width="1.5" stroke-linecap="round" opacity="0.5" pointer-events="none"/>`;
+  svg_s += `<line x1="${rv(gx)}" y1="${rv(gy)}" x2="${rv(gx+6)}" y2="${rv(gy+4)}" stroke="${COL}" stroke-width="1.5" stroke-linecap="round" opacity="0.5" pointer-events="none"/>`;
+  svg_s += `</g>`;
+
+  svg.setAttribute('width',W); svg.setAttribute('height',H);
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=svg_s;
+}
+
+// ─── V Render (n=1, non-braided) ──────────────────────────────────────────────
+function renderV(st, svgId) {
+  const svg=document.getElementById(svgId);
+  const l1=layoutTree(st.roots1[0],false,st.reg);
+  const l2=layoutTree(st.roots2[0],true, st.reg);
+  const nL=l1.leaves.length;
+  const h1=Math.max(0,...l1.nodes.map(nd=>nd.y));
+  const h2=Math.max(0,...l2.nodes.map(nd=>-nd.y));
+
+  // Permutation zone: a fixed-height band between the two trees where arrows live.
+  // Leaves extend vertically into this zone via stubs so arrows never overlap tree edges.
+  const PERM_ZONE = Math.max(60, nL * 14); // grows with nL so crossing arrows have room
+  const STUB = 18; // vertical stub length from leaf into perm zone
+
+  const oy1=PAD+18;           // T₊ root y
+  const permTop=oy1+h1+STUB;  // top of permutation zone (T₊ stubs end here)
+  const permBot=permTop+PERM_ZONE; // bottom of permutation zone (T₋ stubs end here)
+  const oy2=permBot+STUB+h2;  // T₋ root y
+  const ox=PAD;
+  const W=nL*SS+2*PAD, H=oy2+PAD+30;
+
+  const l1ids=l1.leaves.map(lf=>lf.id), l2ids=l2.leaves.map(lf=>lf.id);
+  const mergePar=new Set();
+  for(let i=0;i+1<nL;i++) if(isMergeable(l1ids,l2ids,i,st)) mergePar.add(st.reg.get(l1ids[i]).parent);
+
+  let s=`<defs>
+    <marker id="ah-${svgId}" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0,9 3.5,0 7" fill="${COL}"/>
+    </marker>
+    <marker id="ah-sel-${svgId}" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0,9 3.5,0 7" fill="${COL_SEL}"/>
+    </marker>
+  </defs>`;
+
+  s+=`<text x="${rv(ox)}" y="${rv(oy1-8)}" font-size="12" font-family="monospace" fill="${COL}" opacity="0.4" pointer-events="none">T&#x208a;</text>`;
+  s+=`<text x="${rv(ox)}" y="${rv(oy2+22)}" font-size="12" font-family="monospace" fill="${COL}" opacity="0.4" pointer-events="none">T&#x208b;</text>`;
+
+  // Tree edges
+  for(const e of l1.edges)
+    s+=`<line x1="${rv(e.x1+ox)}" y1="${rv(e.y1+oy1)}" x2="${rv(e.x2+ox)}" y2="${rv(e.y2+oy1)}" stroke="${COL}" stroke-width="2" stroke-linecap="round" pointer-events="none"/>`;
+  for(const e of l2.edges)
+    s+=`<line x1="${rv(e.x1+ox)}" y1="${rv(e.y1+oy2)}" x2="${rv(e.x2+ox)}" y2="${rv(e.y2+oy2)}" stroke="${COL}" stroke-width="2" stroke-linecap="round" pointer-events="none"/>`;
+
+  // Stubs: T₊ leaf → permTop, T₋ leaf → permBot
+  for(let i=0;i<nL;i++){
+    const lx=l1.leaves[i].x+ox, ly=l1.leaves[i].y+oy1;
+    s+=`<line x1="${rv(lx)}" y1="${rv(ly)}" x2="${rv(lx)}" y2="${rv(permTop)}" stroke="${COL}" stroke-width="1.5" opacity="0.35" pointer-events="none"/>`;
+    const rx=l2.leaves[i].x+ox, ry=l2.leaves[i].y+oy2;
+    s+=`<line x1="${rv(rx)}" y1="${rv(ry)}" x2="${rv(rx)}" y2="${rv(permBot)}" stroke="${COL}" stroke-width="1.5" opacity="0.35" pointer-events="none"/>`;
+  }
+
+  // Permutation arrows: from (lx, permTop) → (rx, permBot), entirely inside the zone
+  for(let i=0;i<nL;i++){
+    const lx=l1.leaves[i].x+ox;
+    const rx=l2.leaves[st.perm[i]].x+ox;
+    const isSel=st.sel1===i;
+    const isId=st.perm[i]===i;
+    const dx=rx-lx, dy=permBot-permTop, len=Math.sqrt(dx*dx+dy*dy)||1;
+    const sx=lx+dx/len*4, sy=permTop+dy/len*4;
+    const ex=rx-dx/len*10, ey=permBot-dy/len*10;
+    s+=`<line x1="${rv(sx)}" y1="${rv(sy)}" x2="${rv(ex)}" y2="${rv(ey)}"
+      stroke="${isSel?COL_SEL:COL}" stroke-width="${isSel?2:isId?1.2:1.6}"
+      marker-end="url(#${isSel?'ah-sel-':' ah-'}${svgId})"
+      opacity="${isSel?1:isId?0.3:0.72}" pointer-events="none"/>`;
+  }
+
+  // Perm zone separator lines (subtle)
+  s+=`<line x1="${rv(ox-8)}" y1="${rv(permTop)}" x2="${rv(ox+nL*SS+8)}" y2="${rv(permTop)}" stroke="${COL}" stroke-width="0.5" opacity="0.12" pointer-events="none"/>`;
+  s+=`<line x1="${rv(ox-8)}" y1="${rv(permBot)}" x2="${rv(ox+nL*SS+8)}" y2="${rv(permBot)}" stroke="${COL}" stroke-width="0.5" opacity="0.12" pointer-events="none"/>`;
+
+  // Node hits + circles — clicking a node always splits (leaf) or merges (inner)
+  for(const [tree,lay,oy] of [[1,l1,oy1],[2,l2,oy2]]){
+    for(const nd of lay.nodes){
+      const cx=rv(nd.x+ox),cy=rv(nd.y+oy);
+      const isHov=nd.id===st.hovId;
+      const isMrg=!nd.leaf&&mergePar.has(nd.id);
+      let cur='default';
+      if(nd.leaf) cur='cell';
+      else if(isMrg) cur='zoom-out';
+      if(isMrg) s+=`<circle cx="${cx}" cy="${cy}" r="12" fill="none" stroke="${COL}" stroke-dasharray="3 2" stroke-width="1.5" opacity="0.4" pointer-events="none"/>`;
+      s+=`<circle class="hit" cx="${cx}" cy="${cy}" r="15" fill="transparent" style="cursor:${cur}" pointer-events="all" data-tree="${tree}" data-id="${nd.id}" data-leaf="${nd.leaf}" data-li="${nd.leafIdx}" data-action="splitmerge"/>`;
+      s+=`<circle cx="${cx}" cy="${cy}" r="${isHov?NR+2:NR}" fill="${isHov?COL_HOV:COL}" pointer-events="none"/>`;
+    }
+  }
+
+  // Leaf number labels — clickable for rerouting permutation arrows
+  // T₊ numbers: click to select source; T₋ numbers: click to select target
+  for(let i=0;i<nL;i++){
+    const tx=rv(l1.leaves[i].x+ox), ty=rv(permTop+13);
+    const isSel=st.sel1===i;
+    if(isSel) s+=`<circle cx="${tx}" cy="${rv(permTop+9)}" r="9" fill="none" stroke="${COL_SEL}" stroke-width="1.5" opacity="0.7" pointer-events="none"/>`;
+    s+=`<text class="lbl-hit" x="${tx}" y="${ty}" text-anchor="middle" font-size="12" font-weight="${isSel?'700':'400'}" font-family="monospace" fill="${isSel?COL_SEL:COL_NUM}" cursor="pointer" pointer-events="all" data-tree="1" data-li="${i}">${i+1}</text>`;
+  }
+  for(let i=0;i<nL;i++){
+    const tx=rv(l2.leaves[i].x+ox), ty=rv(permBot-5);
+    const isTgt=st.sel1!==null, isArrow=st.sel1!==null&&st.perm[st.sel1]===i;
+    if(isTgt&&!isArrow) s+=`<circle cx="${tx}" cy="${rv(permBot-9)}" r="9" fill="none" stroke="#56d364" stroke-width="1" opacity="0.5" pointer-events="none"/>`;
+    if(isArrow) s+=`<circle cx="${tx}" cy="${rv(permBot-9)}" r="9" fill="none" stroke="${COL_SEL}" stroke-width="1.5" opacity="0.7" pointer-events="none"/>`;
+    s+=`<text class="lbl-hit" x="${tx}" y="${ty}" text-anchor="middle" font-size="12" font-weight="${isArrow?'700':'400'}" font-family="monospace" fill="${isArrow?COL_SEL:COL_NUM}" cursor="${isTgt?'crosshair':'pointer'}" pointer-events="all" data-tree="2" data-li="${i}">${i+1}</text>`;
+  }
+
+  const hint=st.sel1!==null?`arrow from ${st.sel1+1} \u2192 click a bottom number to redirect`:'click top number: select arrow  \u00b7  click node: split / merge';
+  s+=`<text x="${rv(ox)}" y="${rv(H-7)}" font-size="11" font-family="monospace" fill="${COL}" opacity="0.85" pointer-events="none">\u03b1 = (${st.perm.map(v=>v+1).join(' ')})</text>`;
+  s+=`<text x="${rv(W/2)}" y="${rv(H-7)}" text-anchor="middle" font-size="11" font-family="monospace" fill="${st.sel1!==null?COL_SEL:COL}" opacity="0.9" pointer-events="none">${hint}</text>`;
+
+  svg.setAttribute('width',W); svg.setAttribute('height',H);
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=s;
+}
+
+// ─── nV render (n>1, non-braided) — single T₊ and T₋ with colored edges ───────
+function renderNV(st, svgId, n) {
+  const svg = document.getElementById(svgId);
+  const l1  = layoutTree(st.roots1[0], false, st.reg);
+  const l2  = layoutTree(st.roots2[0], true,  st.reg);
+  const nL  = l1.leaves.length;
+  const h1  = Math.max(0, ...l1.nodes.map(nd => nd.y));
+  const h2  = Math.max(0, ...l2.nodes.map(nd => -nd.y));
+
+  const PERM_ZONE = Math.max(60, nL * 14);
+  const STUB = 18;
+  const oy1 = PAD + 18;
+  const permTop = oy1 + h1 + STUB;
+  const permBot = permTop + PERM_ZONE;
+  const oy2 = permBot + STUB + h2;
+  const ox  = PAD;
+  const W   = nL * SS + 2 * PAD;
+  const H   = oy2 + PAD + 44;
+
+  const l1ids = l1.leaves.map(lf => lf.id);
+  const l2ids = l2.leaves.map(lf => lf.id);
+  const mergePar = new Set();
+  for (let i = 0; i+1 < nL; i++)
+    if (isMergeable(l1ids, l2ids, i, st)) mergePar.add(st.reg.get(l1ids[i]).parent);
+  const crossRemPar = new Set();
+  for (let i = 0; i+3 < nL; i++) if (isCrossRemovable(l1ids,l2ids,i,st)) {
+    crossRemPar.add(st.reg.get(st.reg.get(l1ids[i]).parent).parent);
+    crossRemPar.add(st.reg.get(st.reg.get(l2ids[st.perm[i]]).parent).parent);
+  }
+
+  function edgeCol(nodeId) {
+    const ci = st.edgeColors.has(nodeId) ? st.edgeColors.get(nodeId) : 0;
+    return EDGE_PALETTE[ci % n];
+  }
+
+  let s = `<defs>
+    <marker id="ah-${svgId}" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0,9 3.5,0 7" fill="${COL}"/>
+    </marker>
+    <marker id="ah-sel-${svgId}" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0,9 3.5,0 7" fill="${COL_SEL}"/>
+    </marker>
+  </defs>`;
+
+  s += `<text x="${rv(ox)}" y="${rv(oy1-8)}" font-size="12" font-family="monospace" fill="${COL}" opacity="0.85" pointer-events="none">T&#x208a;</text>`;
+  s += `<text x="${rv(ox)}" y="${rv(oy2+22)}" font-size="12" font-family="monospace" fill="${COL}" opacity="0.85" pointer-events="none">T&#x208b;</text>`;
+
+  // Tree edges — colored by edgeColors, with transparent 14px hit area
+  for (const e of l1.edges) {
+    const cc = edgeCol(e.parentId);
+    const x1=rv(e.x1+ox), y1=rv(e.y1+oy1), x2=rv(e.x2+ox), y2=rv(e.y2+oy1);
+    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${cc}" stroke-width="2" stroke-linecap="round" pointer-events="none"/>`;
+    s += `<line class="edge-hit" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="transparent" stroke-width="14" stroke-linecap="round" cursor="pointer" pointer-events="stroke" data-nodeid="${e.parentId}"/>`;
+  }
+  for (const e of l2.edges) {
+    const cc = edgeCol(e.parentId);
+    const x1=rv(e.x1+ox), y1=rv(e.y1+oy2), x2=rv(e.x2+ox), y2=rv(e.y2+oy2);
+    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${cc}" stroke-width="2" stroke-linecap="round" pointer-events="none"/>`;
+    s += `<line class="edge-hit" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="transparent" stroke-width="14" stroke-linecap="round" cursor="pointer" pointer-events="stroke" data-nodeid="${e.parentId}"/>`;
+  }
+
+  // Stubs: T₊ leaf → permTop, T₋ leaf → permBot
+  for (let i = 0; i < nL; i++) {
+    const lx = l1.leaves[i].x + ox, ly = l1.leaves[i].y + oy1;
+    s += `<line x1="${rv(lx)}" y1="${rv(ly)}" x2="${rv(lx)}" y2="${rv(permTop)}" stroke="${COL}" stroke-width="1.5" opacity="0.35" pointer-events="none"/>`;
+    const rx = l2.leaves[i].x + ox, ry = l2.leaves[i].y + oy2;
+    s += `<line x1="${rv(rx)}" y1="${rv(ry)}" x2="${rv(rx)}" y2="${rv(permBot)}" stroke="${COL}" stroke-width="1.5" opacity="0.35" pointer-events="none"/>`;
+  }
+
+  // Perm zone separator lines
+  s += `<line x1="${rv(ox-8)}" y1="${rv(permTop)}" x2="${rv(ox+nL*SS+8)}" y2="${rv(permTop)}" stroke="${COL}" stroke-width="0.5" opacity="0.12" pointer-events="none"/>`;
+  s += `<line x1="${rv(ox-8)}" y1="${rv(permBot)}" x2="${rv(ox+nL*SS+8)}" y2="${rv(permBot)}" stroke="${COL}" stroke-width="0.5" opacity="0.12" pointer-events="none"/>`;
+
+  // Permutation arrows — always COL (neutral), never EDGE_PALETTE colors
+  for (let i = 0; i < nL; i++) {
+    const lx = l1.leaves[i].x + ox, rx = l2.leaves[st.perm[i]].x + ox;
+    const isSel = st.sel1 === i, isId = st.perm[i] === i;
+    const dx = rx-lx, dy = permBot-permTop, len = Math.sqrt(dx*dx+dy*dy)||1;
+    const sx = lx+dx/len*4, sy = permTop+dy/len*4;
+    const ex = rx-dx/len*10, ey = permBot-dy/len*10;
+    s += `<line x1="${rv(sx)}" y1="${rv(sy)}" x2="${rv(ex)}" y2="${rv(ey)}"
+      stroke="${isSel?COL_SEL:COL}" stroke-width="${isSel?2:isId?1.2:1.6}"
+      marker-end="url(#${isSel?'ah-sel-':' ah-'}${svgId})"
+      opacity="${isSel?1:isId?0.3:0.72}" pointer-events="none"/>`;
+  }
+
+  // Node circles — always COL (neutral)
+  for (const [tree, lay, oy] of [[1, l1, oy1], [2, l2, oy2]]) {
+    for (const nd of lay.nodes) {
+      const px = rv(nd.x+ox), py = rv(nd.y+oy);
+      const isHov = nd.id === st.hovId;
+      const isMrg = !nd.leaf && mergePar.has(nd.id);
+      const isCR  = !nd.leaf && crossRemPar.has(nd.id);
+      let cur = 'default';
+      if (nd.leaf) cur = 'cell';
+      else if (isMrg||isCR) cur = 'zoom-out';
+      if (isMrg) s += `<circle cx="${px}" cy="${py}" r="12" fill="none" stroke="${COL}" stroke-dasharray="3 2" stroke-width="1.5" opacity="0.4" pointer-events="none"/>`;
+      if (isCR)  s += `<circle cx="${px}" cy="${py}" r="16" fill="none" stroke="#e3b341" stroke-dasharray="4 3" stroke-width="1.5" opacity="0.55" pointer-events="none"/>`;
+      s += `<circle class="hit" cx="${px}" cy="${py}" r="15" fill="transparent" style="cursor:${cur}" pointer-events="all" data-tree="${tree}" data-id="${nd.id}" data-leaf="${nd.leaf}" data-li="${nd.leafIdx}" data-crossrm="${isCR?1:0}"/>`;
+      s += `<circle cx="${px}" cy="${py}" r="${isHov?NR+2:NR}" fill="${isHov?COL_HOV:COL}" pointer-events="none"/>`;
+    }
+  }
+
+  // Leaf number labels at perm zone edges — click to select/redirect arrows
+  for (let i = 0; i < nL; i++) {
+    const tx = rv(l1.leaves[i].x+ox), ty = rv(permTop+13);
+    const isSel = st.sel1 === i;
+    if (isSel) s += `<circle cx="${tx}" cy="${rv(permTop+9)}" r="9" fill="none" stroke="${COL_SEL}" stroke-width="1.5" opacity="0.7" pointer-events="none"/>`;
+    s += `<text class="lbl-hit" x="${tx}" y="${ty}" text-anchor="middle" font-size="12" font-weight="${isSel?'700':'400'}" font-family="monospace" fill="${isSel?COL_SEL:COL_NUM}" cursor="pointer" pointer-events="all" data-tree="1" data-li="${i}">${i+1}</text>`;
+  }
+  for (let i = 0; i < nL; i++) {
+    const tx = rv(l2.leaves[i].x+ox), ty = rv(permBot-5);
+    const isTgt = st.sel1 !== null, isArrow = st.sel1 !== null && st.perm[st.sel1] === i;
+    if (isTgt && !isArrow) s += `<circle cx="${tx}" cy="${rv(permBot-9)}" r="9" fill="none" stroke="#56d364" stroke-width="1" opacity="0.5" pointer-events="none"/>`;
+    if (isArrow)           s += `<circle cx="${tx}" cy="${rv(permBot-9)}" r="9" fill="none" stroke="${COL_SEL}" stroke-width="1.5" opacity="0.7" pointer-events="none"/>`;
+    s += `<text class="lbl-hit" x="${tx}" y="${ty}" text-anchor="middle" font-size="12" font-weight="${isArrow?'700':'400'}" font-family="monospace" fill="${isArrow?COL_SEL:COL_NUM}" cursor="${isTgt?'crosshair':'pointer'}" pointer-events="all" data-tree="2" data-li="${i}">${i+1}</text>`;
+  }
+
+  s += `<text x="${rv(ox)}" y="${rv(H-7)}" font-size="11" font-family="monospace" fill="${COL}" opacity="0.85" pointer-events="none">\u03b1 = (${st.perm.map(v=>v+1).join(' ')})</text>`;
+  if (st.sel1 !== null) {
+    s += `<text x="${rv(W/2)}" y="${rv(H-7)}" text-anchor="middle" font-size="11" font-family="monospace" fill="${COL_SEL}" opacity="0.9" pointer-events="none">arrow from ${st.sel1+1} \u2192 click a bottom number to redirect</text>`;
+  } else {
+    s += `<text x="${rv(W/2)}" y="${rv(H-20)}" text-anchor="middle" font-size="11" font-family="monospace" fill="${COL}" opacity="0.9" pointer-events="none">click \u25cf: split / merge  \u00b7  shift-click \u25cf: \u2A2F-split  \u00b7  click edge: cycle color</text>`;
+    s += `<text x="${rv(W/2)}" y="${rv(H-7)}" text-anchor="middle" font-size="11" font-family="monospace" fill="${COL}" opacity="0.9" pointer-events="none">click label: redirect arrow</text>`;
+  }
+
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = s;
+}
+
+function fullRender(st,svgId){
+  const {n,braided}=cfg();
+  if(braided){renderBV(st,svgId,n);return;}
+  if(n>1){renderNV(st,svgId,n);return;}
+  renderV(st,svgId);
+}
+
+// ─── Events ───────────────────────────────────────────────────────────────────
+function setupEvents(st, svgId) {
+  const svg=document.getElementById(svgId);
+
+  svg.addEventListener('click',e=>{
+    if(_dragJustDone){_dragJustDone=false;return;}
+    const {braided,n}=cfg();
+
+    // Crossing hit → click to remove (undo), shift-click to toggle sign
+    const ch=e.target.closest('.cross-hit');
+    if(ch&&braided){
+      const ci=+ch.dataset.ci;
+      if(ci>=st.braid.length)return;
+      if(e.shiftKey) st.braid[ci]={i:st.braid[ci].i,sign:-st.braid[ci].sign};
+      else st.braid.splice(ci,1);
+      st.perm=braidToPerm(st.braid,gLeaves1(st).length);
+      fullRender(st,svgId); return;
+    }
+
+    // Label clicks (numbers at stub endpoints) → reroute permutation arrows
+    const lbl=e.target.closest('.lbl-hit');
+    if(lbl&&!braided){
+      const tree=+lbl.dataset.tree, li=+lbl.dataset.li;
+      const l1ids=gLeaves1(st),l2ids=gLeaves2(st);
+      if(tree===1){
+        // Select/deselect source
+        st.sel1 = st.sel1===li ? null : li;
+      } else {
+        // Redirect selected arrow to this T₋ target
+        if(st.sel1!==null){
+          const i=st.sel1, j=li, oldJ=st.perm[i];
+          if(oldJ!==j){const k=st.perm.indexOf(j); st.perm[i]=j; st.perm[k]=oldJ;}
+          st.sel1=null;
+        }
+      }
+      fullRender(st,svgId); return;
+    }
+
+    // Edge color toggle (n>1)
+    const edgehit = e.target.closest('.edge-hit');
+    if (edgehit && n > 1) {
+      const nodeId = +edgehit.dataset.nodeid;
+      const cur = st.edgeColors.has(nodeId) ? st.edgeColors.get(nodeId) : 0;
+      st.edgeColors.set(nodeId, (cur + 1) % n);
+      fullRender(st, svgId); return;
+    }
+
+    const hit=e.target.closest('.hit');
+    if(!hit){st.sel1=null;fullRender(st,svgId);return;}
+    const tree=+hit.dataset.tree,id=+hit.dataset.id;
+    const isLeaf=hit.dataset.leaf==='true',li=+hit.dataset.li;
+
+    if(braided){
+      const l1ids=gLeaves1(st),l2ids=gLeaves2(st);
+      if(tree===1){
+        if(isLeaf){
+          if(e.shiftKey&&n>=2){
+            crossSplitAt(st,li,true);
+          } else {
+            const j=st.perm[li];
+            splitLeaf(st,l1ids[li]); splitLeaf(st,l2ids[j]);
+            st.braid=braidInsertStrand(st.braid,li+1);
+            st.perm=permSplit(st.perm,li,j);
+          }
+        } else {
+          const nd=st.reg.get(id);
+          if(nd.left!==null){
+            const i=l1ids.indexOf(nd.left);
+            if(i!==-1&&isMergeable(l1ids,l2ids,i,st)){
+              const j=st.perm[i];
+              mergeNode(st,id); mergeNode(st,st.reg.get(l2ids[j]).parent);
+              st.braid=st.braid.filter(g=>g.i!==i).map(g=>({i:g.i>i?g.i-1:g.i,sign:g.sign}));
+              st.perm=permMerge(st.perm,i,j);
+            } else {
+              // Check braided cross removal (nd is a grandparent)
+              const P1nd=st.reg.get(nd.left);
+              if(P1nd&&!P1nd.leaf){
+                const i2=l1ids.indexOf(P1nd.left);
+                if(i2!==-1&&isBraidedCrossRemovable(l1ids,l2ids,i2,st)){
+                  const j=st.perm[i2];
+                  const GQid=st.reg.get(st.reg.get(l2ids[j]).parent).parent;
+                  collapseToLeaf(st,id); collapseToLeaf(st,GQid);
+                  st.braid=braidCrossRemove(st.braid,i2);
+                  st.perm=permCrossRemove(st.perm,i2,j);
+                }
+              }
+            }
+          }
+        }
+      } else {
+        if(isLeaf){
+          const j=li, i=st.perm.indexOf(j);
+          if(i!==-1){
+            if(e.shiftKey&&n>=2){
+              crossSplitAt(st,i,true);
+            } else {
+              splitLeaf(st,l1ids[i]); splitLeaf(st,l2ids[j]);
+              st.braid=braidInsertStrand(st.braid,i+1);
+              st.perm=permSplit(st.perm,i,j);
+            }
+          }
+        } else {
+          const nd=st.reg.get(id);
+          if(nd.left!==null){
+            const j=l2ids.indexOf(nd.left);
+            if(j!==-1){
+              const i=st.perm.indexOf(j);
+              if(i!==-1&&isMergeable(l1ids,l2ids,i,st)){
+                mergeNode(st,st.reg.get(l1ids[i]).parent);
+                mergeNode(st,id);
+                st.braid=st.braid.filter(g=>g.i!==i).map(g=>({i:g.i>i?g.i-1:g.i,sign:g.sign}));
+                st.perm=permMerge(st.perm,i,j);
+              }
+            } else {
+              // Check braided cross removal (nd is a grandparent in T₋)
+              const Q1nd=st.reg.get(nd.left);
+              if(Q1nd&&!Q1nd.leaf){
+                const j2=l2ids.indexOf(Q1nd.left);
+                if(j2!==-1){
+                  const i2=st.perm.indexOf(j2);
+                  if(i2!==-1&&isBraidedCrossRemovable(l1ids,l2ids,i2,st)){
+                    const GPid=st.reg.get(st.reg.get(l1ids[i2]).parent).parent;
+                    collapseToLeaf(st,GPid); collapseToLeaf(st,id);
+                    st.braid=braidCrossRemove(st.braid,i2);
+                    st.perm=permCrossRemove(st.perm,i2,j2);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      fullRender(st,svgId); return;
+    }
+
+    // Non-braided: .hit always means split (leaf) or merge (inner node)
+    const l1ids=gLeaves1(st),l2ids=gLeaves2(st);
+    if(tree===1){
+      if(isLeaf){
+        // Split T₊ leaf + coupled T₋ leaf (shift-click: cross split when n≥2)
+        if(e.shiftKey&&n>=2){
+          crossSplitAt(st,li,false); st.sel1=null;
+        } else {
+          const j=st.perm[li];
+          splitLeaf(st,l1ids[li]); splitLeaf(st,l2ids[j]);
+          st.perm=permSplit(st.perm,li,j); st.sel1=null;
+        }
+      } else {
+        // Merge or cross-remove T₊ inner node + coupled T₋
+        const nd=st.reg.get(id);
+        if(nd.left!==null){
+          const i=l1ids.indexOf(nd.left);
+          if(i!==-1&&isMergeable(l1ids,l2ids,i,st)){
+            const j=st.perm[i];
+            mergeNode(st,id); mergeNode(st,st.reg.get(l2ids[j]).parent);
+            st.perm=permMerge(st.perm,i,j); st.sel1=null;
+          } else {
+            // Check cross removal (nd is a grandparent)
+            const P1nd=st.reg.get(nd.left);
+            if(P1nd&&!P1nd.leaf){
+              const i2=l1ids.indexOf(P1nd.left);
+              if(i2!==-1&&isCrossRemovable(l1ids,l2ids,i2,st)){
+                const j=st.perm[i2];
+                const GQid=st.reg.get(st.reg.get(l2ids[j]).parent).parent;
+                collapseToLeaf(st,id); collapseToLeaf(st,GQid);
+                st.perm=permCrossRemove(st.perm,i2,j); st.sel1=null;
+              }
+            }
+          }
+        }
+      }
+    } else if(tree===2){
+      if(isLeaf){
+        // Split T₋ leaf + coupled T₊ (shift-click: cross split when n≥2)
+        const j=li, i=st.perm.indexOf(j);
+        if(i!==-1){
+          if(e.shiftKey&&n>=2){
+            crossSplitAt(st,i,false); st.sel1=null;
+          } else {
+            splitLeaf(st,l1ids[i]); splitLeaf(st,l2ids[j]);
+            st.perm=permSplit(st.perm,i,j); st.sel1=null;
+          }
+        }
+      } else {
+        // Merge or cross-remove T₋ inner node + coupled T₊
+        const nd=st.reg.get(id);
+        if(nd.left!==null){
+          const j=l2ids.indexOf(nd.left);
+          if(j!==-1){
+            const i=st.perm.indexOf(j);
+            if(i!==-1&&isMergeable(l1ids,l2ids,i,st)){
+              mergeNode(st,st.reg.get(l1ids[i]).parent);
+              mergeNode(st,id);
+              st.perm=permMerge(st.perm,i,j); st.sel1=null;
+            }
+          } else {
+            // Check cross removal (nd is a grandparent in T₋)
+            const Q1nd=st.reg.get(nd.left);
+            if(Q1nd&&!Q1nd.leaf){
+              const j2=l2ids.indexOf(Q1nd.left);
+              if(j2!==-1){
+                const i2=st.perm.indexOf(j2);
+                if(i2!==-1&&isCrossRemovable(l1ids,l2ids,i2,st)){
+                  const GPid=st.reg.get(st.reg.get(l1ids[i2]).parent).parent;
+                  collapseToLeaf(st,GPid); collapseToLeaf(st,id);
+                  st.perm=permCrossRemove(st.perm,i2,j2); st.sel1=null;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    fullRender(st,svgId);
+  });
+
+  // Mousedown on braid-zone resize grip
+  svg.addEventListener('mousedown',e=>{
+    const rh=e.target.closest('.braid-resize');
+    if(rh){
+      const p=svgPt(svg,e.clientX,e.clientY);
+      _resizeDrag={st,svgId,startY:p.y,startH:+rh.dataset.braidh};
+      e.preventDefault(); return;
+    }
+    // Mousedown on strand → start crossing drag
+    if(!cfg().braided)return;
+    const sh=e.target.closest('.strand-drag');
+    if(!sh)return;
+    const strand=+sh.dataset.strand;
+    const p=svgPt(svg,e.clientX,e.clientY);
+    _drag={st,svgId,strand,sign:1,startX:p.x,startY:p.y,curX:p.x,curY:p.y,live:false};
+    e.preventDefault();
+  });
+
+  svg.addEventListener('mouseover',e=>{
+    const hit=e.target.closest('.hit');
+    const newId=hit?+hit.dataset.id:null;
+    if(newId!==st.hovId){st.hovId=newId;fullRender(st,svgId);}
+  });
+  svg.addEventListener('mouseleave',()=>{if(st.hovId!==null){st.hovId=null;fullRender(st,svgId);}});
+}
+
+// ─── Document drag ────────────────────────────────────────────────────────────
+document.addEventListener('mousemove',e=>{
+  if(_resizeDrag){
+    const svg=document.getElementById(_resizeDrag.svgId);
+    const p=svgPt(svg,e.clientX,e.clientY);
+    const newH=Math.max(BRAID_BASE,_resizeDrag.startH+(p.y-_resizeDrag.startY));
+    _resizeDrag.st.braidH=newH;
+    fullRender(_resizeDrag.st,_resizeDrag.svgId);
+    return;
+  }
+  if(!_drag)return;
+  const svg=document.getElementById(_drag.svgId);
+  const p=svgPt(svg,e.clientX,e.clientY);
+  _drag.curX=p.x; _drag.curY=p.y;
+  const dx=p.x-_drag.startX,dy=p.y-_drag.startY;
+  if(!_drag.live&&dx*dx+dy*dy>25)_drag.live=true;
+  if(_drag.live)fullRender(_drag.st,_drag.svgId);
+});
+
+document.addEventListener('mouseup',e=>{
+  if(_resizeDrag){_resizeDrag=null;return;}
+  if(!_drag)return;
+  const {st,svgId,strand,live}=_drag; _drag=null;
+  if(!live)return;
+  _dragJustDone=true;
+  const svg=document.getElementById(svgId);
+  const p=svgPt(svg,e.clientX,e.clientY);
+  const {n}=cfg();
+
+  // Re-derive braid zone geometry (single tree)
+  const lay1=layoutTree(st.roots1[0],false,st.reg);
+  const h1=Math.max(0,...lay1.nodes.map(nd=>nd.y));
+  const braidH=Math.max(BRAID_BASE,st.braid.length*BRAID_STEP+BRAID_BASE);
+  const oy1=PAD+18,brTop=oy1+h1+12,brBot=brTop+braidH;
+
+  if(p.y<brTop||p.y>brBot){fullRender(st,svgId);return;}
+
+  const slotX=lay1.leaves.map(lf=>lf.x+PAD);
+
+  const tot=slotX.length;
+  if(tot<2){fullRender(st,svgId);return;}
+
+  let nearSlot=0,minD=Infinity;
+  for(let q=0;q+1<tot;q++){
+    const mid=(slotX[q]+slotX[q+1])/2;
+    if(Math.abs(p.x-mid)<minD){minD=Math.abs(p.x-mid);nearSlot=q;}
+  }
+
+  const relY=(p.y-brTop)/braidH;
+  const insertPos=Math.max(0,Math.min(st.braid.length,Math.round(relY*(st.braid.length+1))));
+
+  // Simulate lanes up to insertPos to find dragged strand's slot at the crossing
+  let simS2slot=Array.from({length:tot},(_,i)=>i);
+  let simSlot2s=Array.from({length:tot},(_,i)=>i);
+  for(let ci=0;ci<insertPos&&ci<st.braid.length;ci++){
+    const gi2=st.braid[ci].i;
+    if(gi2>=0&&gi2+1<tot){
+      const sA2=simSlot2s[gi2],sB2=simSlot2s[gi2+1];
+      simSlot2s[gi2]=sB2; simSlot2s[gi2+1]=sA2;
+      simS2slot[sA2]=gi2+1; simS2slot[sB2]=gi2;
+    }
+  }
+  const draggedSlot=simS2slot[strand];
+  // sign>0 → sA (slot nearSlot) is over; sign<0 → sB (slot nearSlot+1) is over
+  const sign = draggedSlot===nearSlot ? +1 : draggedSlot===nearSlot+1 ? -1 : +1;
+
+  st.braid.splice(insertPos,0,{i:nearSlot,sign});
+  st.perm=braidToPerm(st.braid,gLeaves1(st).length);
+  fullRender(st,svgId);
+});
+
+// ─── Config change handlers ────────────────────────────────────────────────────
+function onNChange(){presetInto(0,'identity');presetInto(1,'identity');}
+function onBraidedChange(){
+  const nowBraided = cfg().braided;
+  for(let i=0;i<2;i++){
+    const st=ST[i];
+    if(!nowBraided && st.braid.length>0){
+      // Braid was encoding the permutation — snapshot it into st.perm before clearing
+      const tot = lcBy(st.roots1[0],st.reg);
+      st.perm = braidToPerm(st.braid, tot);
+    }
+    st.braid=[]; st.sel1=null;
+    fullRender(st,'svg'+i);
+  }
+}
+
+// ─── Load ─────────────────────────────────────────────────────────────────────
+function loadIntoST(st,prefix,svgId){
+  ['t1','t2','perm'].forEach(k=>{const el=document.getElementById('e-'+k+'-'+prefix);if(el)el.textContent='';});
+  let pT1,pT2;
+  try{pT1=parseTree(document.getElementById('t1-'+prefix).value);}
+  catch(err){document.getElementById('e-t1-'+prefix).textContent='Parse error: '+err.message;return;}
+  try{pT2=parseTree(document.getElementById('t2-'+prefix).value);}
+  catch(err){document.getElementById('e-t2-'+prefix).textContent='Parse error: '+err.message;return;}
+  const n=leafCount(pT1);
+  if(leafCount(pT2)!==n){document.getElementById('e-t2-'+prefix).textContent='Leaf count mismatch';return;}
+  const perm1=document.getElementById('perm-'+prefix).value.trim().split(/\s+/).map(Number);
+  if(perm1.length!==n){document.getElementById('e-perm-'+prefix).textContent=`Expected ${n} values`;return;}
+  const seen=new Set(perm1);
+  if(seen.size!==n||[...seen].some(v=>v<1||v>n)){document.getElementById('e-perm-'+prefix).textContent='Not a valid permutation';return;}
+  st.reg.clear();st.nextId=0;st.sel1=null;st.hovId=null;st.braid=[];st.edgeColors=new Map();
+  st.roots1=[importInto(st,pT1)]; st.roots2=[importInto(st,pT2)];
+  st.perm=perm1.map(v=>v-1);
+  fullRender(st,svgId);
+}
+
+// ─── Presets ──────────────────────────────────────────────────────────────────
+const PRESETS={
+  identity:{t1:'(. .)',t2:'(. .)',perm:'1 2'},
+  x0:{t1:'((. .) .)',t2:'(. (. .))',perm:'1 2 3'},
+  x1:{t1:'(. ((. .) .))',t2:'(. (. (. .)))',perm:'1 2 3 4'},
+  rot3:{t1:'((. .) .)',t2:'((. .) .)',perm:'3 1 2'},
+  rot4:{t1:'((. .) (. .))',t2:'((. .) (. .))',perm:'4 1 2 3'},
+  swap:{t1:'((. .) (. .))',t2:'((. .) (. .))',perm:'3 4 1 2'},
+};
+function loadCrossPreset(idx, svgId) {
+  const {n} = cfg();
+  if (n < 2) { alert('Cross relation requires n \u2265 2 colors.'); return; }
+  const st = ST[idx];
+  st.reg.clear(); st.nextId = 0; st.sel1 = null; st.hovId = null;
+  st.braid = []; st.edgeColors = new Map();
+
+  // T\u208a: ((. .) (. .)), level-1 nodes color 1 (blue), level-2 leaves color 0 (red, default)
+  const shape = {L:{L:{leaf:true},R:{leaf:true}},R:{L:{leaf:true},R:{leaf:true}}};
+  const r1 = importInto(st, shape);
+  const r1nd = st.reg.get(r1);
+  st.edgeColors.set(r1nd.left,  1);
+  st.edgeColors.set(r1nd.right, 1);
+
+  // T\u208b: ((. .) (. .)), level-1 nodes color 0 (red, default), level-2 leaves color 1 (blue)
+  const r2 = importInto(st, shape);
+  const r2nd = st.reg.get(r2);
+  const r2L = st.reg.get(r2nd.left);
+  const r2R = st.reg.get(r2nd.right);
+  st.edgeColors.set(r2L.left,  1);
+  st.edgeColors.set(r2L.right, 1);
+  st.edgeColors.set(r2R.left,  1);
+  st.edgeColors.set(r2R.right, 1);
+
+  st.roots1 = [r1];
+  st.roots2 = [r2];
+  st.perm   = [0, 2, 1, 3]; // \u03c1 = (23) in 0-indexed
+  fullRender(st, svgId);
+}
+
+function loadBraidedCrossPreset(idx, svgId) {
+  // Auto-enable n >= 2 and braided mode
+  const nInput = document.getElementById('n-input');
+  if (parseInt(nInput.value) < 2) nInput.value = 2;
+  document.getElementById('braided-check').checked = true;
+
+  const {n} = cfg();
+  const st = ST[idx];
+  st.reg.clear(); st.nextId = 0; st.sel1 = null; st.hovId = null;
+  st.braid = []; st.edgeColors = new Map();
+
+  // T\u208a: ((. .) (. .)), level-1 nodes color 1 (blue), level-2 leaves color 0 (red, default)
+  const shape = {L:{L:{leaf:true},R:{leaf:true}},R:{L:{leaf:true},R:{leaf:true}}};
+  const r1 = importInto(st, shape);
+  const r1nd = st.reg.get(r1);
+  st.edgeColors.set(r1nd.left,  1);
+  st.edgeColors.set(r1nd.right, 1);
+
+  // T\u208b: ((. .) (. .)), level-1 nodes color 0 (red, default), level-2 leaves color 1 (blue)
+  const r2 = importInto(st, shape);
+  const r2nd = st.reg.get(r2);
+  const r2L = st.reg.get(r2nd.left);
+  const r2R = st.reg.get(r2nd.right);
+  st.edgeColors.set(r2L.left,  1);
+  st.edgeColors.set(r2L.right, 1);
+  st.edgeColors.set(r2R.left,  1);
+  st.edgeColors.set(r2R.right, 1);
+
+  st.roots1 = [r1];
+  st.roots2 = [r2];
+  // \u03c3\u2082: strand 1 over strand 2 (left-over-right, natural order color 0 < color 1)
+  st.braid = [{i: 1, sign: +1}];
+  st.perm = braidToPerm(st.braid, 4);
+
+  // Re-render the other panel too so it reflects the updated braided/n mode
+  const otherId = idx === 0 ? 1 : 0;
+  fullRender(ST[otherId], 'svg' + otherId);
+  fullRender(st, svgId);
+}
+
+function presetInto(idx,name){
+  const {n,braided}=cfg(); const svgId='svg'+idx;
+  if(n>1||braided){initId(ST[idx]);fullRender(ST[idx],svgId);return;}
+  const p=PRESETS[name],prefix=String(idx);
+  document.getElementById('t1-'+prefix).value=p.t1;
+  document.getElementById('t2-'+prefix).value=p.t2;
+  document.getElementById('perm-'+prefix).value=p.perm;
+  loadIntoST(ST[idx],prefix,svgId);
+}
+
+// ─── Multiplication ───────────────────────────────────────────────────────────
+function deepCopy(st){
+  const c=makeState(); c.nextId=st.nextId;
+  c.roots1=[...st.roots1]; c.roots2=[...st.roots2];
+  c.perm=[...st.perm]; c.braid=st.braid.map(g=>({...g})); c.edgeColors=new Map(st.edgeColors);
+  for(const [k,v] of st.reg) c.reg.set(k,{...v});
+  return c;
+}
+function treeAnon(rootId,reg){
+  function go(id){const nd=reg.get(id);if(nd.leaf)return{leaf:true};return{L:go(nd.left),R:go(nd.right)};}
+  return go(rootId);
+}
+function commonRef(a,b){
+  if(a.leaf&&b.leaf)return{leaf:true};
+  if(a.leaf)return{L:commonRef({leaf:true},b.L),R:commonRef({leaf:true},b.R)};
+  if(b.leaf)return{L:commonRef(a.L,{leaf:true}),R:commonRef(a.R,{leaf:true})};
+  return{L:commonRef(a.L,b.L),R:commonRef(a.R,b.R)};
+}
+function expandR(st,shape){
+  function go(nid,sh,off){
+    if(sh.leaf)return;
+    const nd=st.reg.get(nid);
+    if(nd.leaf){
+      const i=st.perm.indexOf(off);
+      const l1=leavesOf(st.roots1[0],st.reg),l2=leavesOf(st.roots2[0],st.reg);
+      splitLeaf(st,l1[i]); splitLeaf(st,l2[off]);
+      st.perm=permSplit(st.perm,i,off);
+      const nd2=st.reg.get(nid); go(nd2.left,sh.L,off); go(nd2.right,sh.R,off+leafCount(sh.L));
+    } else {go(nd.left,sh.L,off);go(nd.right,sh.R,off+leafCount(sh.L));}
+  }
+  go(st.roots2[0],shape,0);
+}
+function expandL(st,shape){
+  function go(nid,sh,off){
+    if(sh.leaf)return;
+    const nd=st.reg.get(nid);
+    if(nd.leaf){
+      const j=st.perm[off];
+      const l1=leavesOf(st.roots1[0],st.reg),l2=leavesOf(st.roots2[0],st.reg);
+      splitLeaf(st,l1[off]); splitLeaf(st,l2[j]);
+      st.perm=permSplit(st.perm,off,j);
+      const nd2=st.reg.get(nid); go(nd2.left,sh.L,off); go(nd2.right,sh.R,off+leafCount(sh.L));
+    } else {go(nd.left,sh.L,off);go(nd.right,sh.R,off+leafCount(sh.L));}
+  }
+  go(st.roots1[0],shape,0);
+}
+function multiply(st1,st2){
+  const c1=deepCopy(st1),c2=deepCopy(st2);
+  const shape=commonRef(treeAnon(c1.roots2[0],c1.reg),treeAnon(c2.roots1[0],c2.reg));
+  expandR(c1,shape); expandL(c2,shape);
+  const pPerm=c1.perm.map(j=>c2.perm[j]);
+  const res=makeState();
+  res.roots1=[importInto(res,treeAnon(c1.roots1[0],c1.reg))];
+  res.roots2=[importInto(res,treeAnon(c2.roots2[0],c2.reg))];
+  res.perm=pPerm; return res;
+}
+
+function compute(){
+  resultST=multiply(ST[0],ST[1]);
+  document.getElementById('result-panel').style.display='';
+  fullRender(resultST,'svg-result');
+}
+function useResult(idx){
+  if(!resultST)return;
+  const c=deepCopy(resultST); ST[idx]=c;
+  const prefix=String(idx),svgId='svg'+idx;
+  function aStr(t){return t.leaf?'.':'('+aStr(t.L)+' '+aStr(t.R)+')';}
+  document.getElementById('t1-'+prefix).value=aStr(treeAnon(c.roots1[0],c.reg));
+  document.getElementById('t2-'+prefix).value=aStr(treeAnon(c.roots2[0],c.reg));
+  document.getElementById('perm-'+prefix).value=c.perm.map(v=>v+1).join(' ');
+  setupEvents(ST[idx],svgId);
+  fullRender(ST[idx],svgId);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+setupEvents(ST[0],'svg0');
+setupEvents(ST[1],'svg1');
+presetInto(0,'identity');
+presetInto(1,'identity');
+</script>
+</body>
+</html>
